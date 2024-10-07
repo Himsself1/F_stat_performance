@@ -1,8 +1,8 @@
 # * Libraries
 
 import msprime
-from pathlib import Path
 import argparse
+import pathlib
 
 # * Command line arguments
 
@@ -40,17 +40,21 @@ admixture_time = 40
 
 # ** Configure Population Sizes
 
-pop_size_0 = 1000
-pop_size_1 = 1000
-pop_size_2 = 1000
-pop_size_3 = 1000
-pop_size_4 = 1000
-pop_size_5 = 1000
-pop_size_6 = 1000
-pop_size_7 = 1000
-pop_size_8 = 1000
-pop_size_out_1 = 1000
-pop_size_out_0 = 1000
+# pop_size_0 = 1000
+# pop_size_1 = 1000
+# pop_size_2 = 1000
+# pop_size_3 = 1000
+# pop_size_4 = 1000
+# pop_size_5 = 1000
+# pop_size_6 = 1000
+# pop_size_7 = 1000
+# pop_size_8 = 1000
+
+pop_initial_size = [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000]
+
+# pop_size_out_1 = 1000
+# pop_size_out_0 = 1000
+outgroup_pop_size = [1000, 1000]
 
 pop_size_ancestral_2_3 = 1000
 pop_size_ancestral_1_2_3 = 1000
@@ -66,11 +70,11 @@ demography = msprime.Demography()
 
 # ** Create populations 0-9
 
-[demography.add_population(name= "pop_"+str(i) ) for i in range(9)]
+[demography.add_population(name= "pop_"+str(i), initial_size = pop_initial_size[i] ) for i in range(9)]
 
 # ** Create 2 outgroups for reference
 
-[demography.add_population(name= "outpop_"+str(i) ) for i in range(2)]
+[demography.add_population(name= "outpop_"+str(i), outgroup_pop_size ) for i in range(2)]
 
 # ** Create ancestral populations
 
@@ -149,6 +153,7 @@ demography.add_admixture(
     ancestral = ["pop_3", "pop_5"],
     proportions = [0.5, 0.5]
 
+
 # ** Sampling
 
 sampling_scheme_0 = msprime.SampleSet( 5, population = "pop_0", time = 0 )
@@ -193,3 +198,4 @@ indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
 ##  Change "output.vcf"
 with open("output.vcf", "w") as vcf_file:
     ts.write_vcf(vcf_file, individual_names=indv_names)
+
