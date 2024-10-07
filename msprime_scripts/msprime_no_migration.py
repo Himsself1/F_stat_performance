@@ -11,11 +11,19 @@ cli = argparse.ArgumentParser(
     prog = 'simulations_msprime.py'
 )
 
+cli.add_argument( "-out_folder", type = str, required = True,
+                  help = "Full path to output folder. The program will create all child folders that may not exist.")
+cli.add_argument( "-name", type = str, required = True,
+                  help = "Name prefix of output vcf files.")
+cli.add_argument( "-how_many", type = int, default = 1,
+                  help = 'How many simulations are going to be run in one go.' )
+argue = cli.parse_args()
+Path(argue.out_folder).mkdir(parents = True, exist_ok = True) # Makes Output directories
+
 # * Build population model 
 
 # ** Configure split times
 
-## Need to configure these split times in order to finalize the model
 ## These times are in generations
 
 split_time_2_3 = 80
@@ -140,3 +148,48 @@ demography.add_admixture(
     derived = "pop_4",
     ancestral = ["pop_3", "pop_5"],
     proportions = [0.5, 0.5]
+
+# ** Sampling
+
+sampling_scheme_0 = msprime.SampleSet( 5, population = "pop_0", time = 0 )
+sampling_scheme_1 = msprime.SampleSet( 5, population = "pop_1", time = 0 )
+sampling_scheme_2 = msprime.SampleSet( 5, population = "pop_2", time = 0 )
+sampling_scheme_3 = msprime.SampleSet( 5, population = "pop_3", time = 0 )
+sampling_scheme_4 = msprime.SampleSet( 5, population = "pop_4", time = 0 )
+sampling_scheme_5 = msprime.SampleSet( 5, population = "pop_5", time = 0 )
+sampling_scheme_6 = msprime.SampleSet( 5, population = "pop_6", time = 0 )
+sampling_scheme_7 = msprime.SampleSet( 5, population = "pop_7", time = 0 )
+sampling_scheme_8 = msprime.SampleSet( 5, population = "pop_8", time = 0 )
+sampling_scheme_9 = msprime.SampleSet( 5, population = "pop_9", time = 0 )
+
+sampling_scheme_out_1 = msprime.SampleSet( 10, population = "outpop_1", time = 0 )
+sampling_scheme_out_0 = msprime.SampleSet( 10, population = "outpop_0", time = 0 )
+
+## Merge all the lists of samples
+all_samples = sampling_scheme_0 + sampling_scheme_1 + sampling_scheme_1 + sampling_scheme_3 + sampling_scheme_4 + sampling_scheme_5 + sampling_scheme_6 + sampling_scheme_7 + sampling_scheme_8 + sampling_scheme_9 + sampling_scheme_out_1 + sampling_scheme_out_0
+
+# ** Start the simulation
+
+demography.sort_events()
+
+ts = msprime.sim_ancestry(
+    demography = demography,
+    samples = all_samples,
+    recombination_rate = 1e-8,
+    sequence_length = 5e+6,
+    ploidy = 1
+)
+
+mutated = msprime.sim_mutations( ts, rate = 1e-8, model = 'binary', discrete_genome = True, keep = False )
+
+
+# ** Modifing individual names for PLiNK integration
+
+## Plink doesn't like when individuals names end with "_0".
+## The foloowing lines modify sample names to avoid this problem.
+
+n_dip_indv = int(ts.num_samples)
+indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
+##  Change "output.vcf"
+with open("output.vcf", "w") as vcf_file:
+    ts.write_vcf(vcf_file, individual_names=indv_names)
