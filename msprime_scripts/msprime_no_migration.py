@@ -74,7 +74,7 @@ demography = msprime.Demography()
 
 # ** Create 2 outgroups for reference
 
-[demography.add_population(name= "outpop_"+str(i), outgroup_pop_size ) for i in range(2)]
+[demography.add_population(name= "outpop_"+str(i), initial_size = outgroup_pop_size[i] ) for i in range(2)]
 
 # ** Create ancestral populations
 
@@ -136,12 +136,12 @@ demography.add_population_split(
 demography.add_population_split(
     time = split_time_ingroups_out_2,
     derived = ["ancestral_ingroups", "outpop_1"],
-    ancestral = "ancestral_outpop_2"
+    ancestral = "ancestral_ingroups_out_1"
 )
 
 demography.add_population_split(
     time = split_time_ancestral_all,
-    derived = ["ancestral_outpop_1", "outpop_0"],
+    derived = ["ancestral_ingroups_out_1", "outpop_0"],
     ancestral = "ancestral_all"
 )
 
@@ -152,7 +152,7 @@ demography.add_admixture(
     derived = "pop_4",
     ancestral = ["pop_3", "pop_5"],
     proportions = [0.5, 0.5]
-
+)
 
 # ** Sampling
 
@@ -171,11 +171,13 @@ sampling_scheme_out_1 = msprime.SampleSet( 10, population = "outpop_1", time = 0
 sampling_scheme_out_0 = msprime.SampleSet( 10, population = "outpop_0", time = 0 )
 
 ## Merge all the lists of samples
-all_samples = sampling_scheme_0 + sampling_scheme_1 + sampling_scheme_1 + sampling_scheme_3 + sampling_scheme_4 + sampling_scheme_5 + sampling_scheme_6 + sampling_scheme_7 + sampling_scheme_8 + sampling_scheme_9 + sampling_scheme_out_1 + sampling_scheme_out_0
+all_samples = [sampling_scheme_0, sampling_scheme_1, sampling_scheme_1, sampling_scheme_3, sampling_scheme_4, sampling_scheme_5, sampling_scheme_6, sampling_scheme_7, sampling_scheme_8, sampling_scheme_9, sampling_scheme_out_1, sampling_scheme_out_0]
 
 # ** Start the simulation
 
 demography.sort_events()
+
+demography.debug()
 
 ts = msprime.sim_ancestry(
     demography = demography,
