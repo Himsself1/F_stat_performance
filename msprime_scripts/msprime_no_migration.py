@@ -18,7 +18,8 @@ cli.add_argument( "-name", type = str, required = True,
 cli.add_argument( "-how_many", type = int, default = 1,
                   help = 'How many simulations are going to be run in one go.' )
 argue = cli.parse_args()
-Path(argue.out_folder).mkdir(parents = True, exist_ok = True) # Makes Output directories
+
+pathlib.Path(argue.out_folder).mkdir(parents = True, exist_ok = True) # Makes Output directories
 
 # * Build population model 
 
@@ -165,39 +166,42 @@ sampling_scheme_5 = msprime.SampleSet( 5, population = "pop_5", time = 0 )
 sampling_scheme_6 = msprime.SampleSet( 5, population = "pop_6", time = 0 )
 sampling_scheme_7 = msprime.SampleSet( 5, population = "pop_7", time = 0 )
 sampling_scheme_8 = msprime.SampleSet( 5, population = "pop_8", time = 0 )
-sampling_scheme_9 = msprime.SampleSet( 5, population = "pop_9", time = 0 )
 
 sampling_scheme_out_1 = msprime.SampleSet( 10, population = "outpop_1", time = 0 )
 sampling_scheme_out_0 = msprime.SampleSet( 10, population = "outpop_0", time = 0 )
 
-## Merge all the lists of samples
-all_samples = [sampling_scheme_0, sampling_scheme_1, sampling_scheme_1, sampling_scheme_3, sampling_scheme_4, sampling_scheme_5, sampling_scheme_6, sampling_scheme_7, sampling_scheme_8, sampling_scheme_9, sampling_scheme_out_1, sampling_scheme_out_0]
+# Merge all the lists of samples
+all_samples = [sampling_scheme_0, sampling_scheme_1, sampling_scheme_1, sampling_scheme_3, sampling_scheme_4, sampling_scheme_5, sampling_scheme_6, sampling_scheme_7, sampling_scheme_8, sampling_scheme_out_1, sampling_scheme_out_0]
 
-# ** Start the simulation
+# ** Sorting events
 
+## sort.events() is mandatoty because they are not passed in chronological order
 demography.sort_events()
+# print(demography.debug())
 
-demography.debug()
+# * Output naming
 
-ts = msprime.sim_ancestry(
-    demography = demography,
-    samples = all_samples,
-    recombination_rate = 1e-8,
-    sequence_length = 5e+6,
-    ploidy = 1
-)
-
-mutated = msprime.sim_mutations( ts, rate = 1e-8, model = 'binary', discrete_genome = True, keep = False )
-
-
-# ** Modifing individual names for PLiNK integration
-
-## Plink doesn't like when individuals names end with "_0".
-## The foloowing lines modify sample names to avoid this problem.
-
-n_dip_indv = int(ts.num_samples)
-indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
+names = [ pathlib.Path( argue.out_folder+"/"+argue.name+"rep_"+str(i)+".vcf" ) for i in range(argue.how_many) ]
+names = [ argue.out_folder+"/"+argue.name+"_rep_"+str(i)+".vcf" for i in range(argue.how_many) ]
 ##  Change "output.vcf"
-with open("output.vcf", "w") as vcf_file:
-    ts.write_vcf(vcf_file, individual_names=indv_names)
+
+# * Start the simulation
+
+for i in range(argue.how_many):
+    
+    ts = msprime.sim_ancestry(
+        demography = demography,
+        samples = all_samples,
+        recombination_rate = 1e-8,
+        sequence_length = 5e+6,
+        ploidy = 1
+    )
+    mutated = msprime.sim_mutations( ts, rate = 1e-8, model = 'binary', discrete_genome = True, keep = False )
+# ** Modifing individual names for PLiNK integration
+    n_dip_indv = int(ts.num_samples)
+    indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
+    with open(names[i], "w") as vcf_file:
+        ts.write_vcf(vcf_file, individual_names=indv_names)
+# Plink doesn't like when individuals names end with "_0".
+# The previous lines modify sample names to avoid this problem.
 
