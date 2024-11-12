@@ -17,6 +17,8 @@ cli.add_argument( "-name", type = str, required = True,
                   help = "Name prefix of output vcf files.")
 cli.add_argument( "-how_many", type = int, default = 1,
                   help = 'How many simulations are going to be run in one go.' )
+cli.add_argument( "-mig_ratio", type = float, required = True,
+                  help = 'Persentage of migrant in migration event.')
 argue = cli.parse_args()
 
 pathlib.Path(argue.out_folder).mkdir(parents = True, exist_ok = True) # Makes Output directories
@@ -89,7 +91,6 @@ demography.add_population(name = "ancestral_ingroups", initial_size = pop_size_a
 demography.add_population(name = "ancestral_ingroups_out_1", initial_size = pop_size_ancestral_ingroups_out_1)
 demography.add_population(name = "ancestral_all", initial_size = pop_size_ancestral_all)
 
-
 # ** Create coalescent events
 
 demography.add_population_split(
@@ -155,6 +156,14 @@ demography.add_admixture(
     proportions = [0.5, 0.5]
 )
 
+# ** Create migration
+
+migration_time = 120
+migration_intensity = argue.intensity
+
+
+demography.add_mass_migration(migration_time, "ancestral_2_3" , "ancestral_5_6", )
+
 # ** Sampling
 
 sampling_scheme_0 = msprime.SampleSet( 5, population = "pop_0", time = 0 )
@@ -193,18 +202,15 @@ for i in range(argue.how_many):
         demography = demography,
         samples = all_samples,
         recombination_rate = 1e-8,
-        sequence_length = 1e+7,
-        ploidy = 2
+        sequence_length = 5e+6,
+        ploidy = 1
     )
     mutated = msprime.sim_mutations( ts, rate = 1e-8, model = 'binary', discrete_genome = True, keep = False )
 # ** Modifing individual names for PLiNK integration
-    n_dip_indv = int(mutated.num_individuals)
+    n_dip_indv = int(ts.num_samples)
     indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
     with open(names[i], "w") as vcf_file:
-        mutated.write_vcf(
-            vcf_file,
-            contig_id = '1',  individual_names=indv_names
-            )
+        ts.write_vcf(vcf_file, individual_names=indv_names)
 # Plink doesn't like when individuals names end with "_0".
 # The previous lines modify sample names to avoid this problem.
 
