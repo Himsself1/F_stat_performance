@@ -161,8 +161,11 @@ demography.add_admixture(
 migration_time = 120
 migration_intensity = argue.intensity
 
-
-demography.add_mass_migration(migration_time, "ancestral_2_3" , "ancestral_5_6", )
+demography.add_mass_migration(
+    time=migration_time,
+    source="ancestral_2_3",
+    dest="ancestral_5_6",
+    proportion=migration_intensity)
 
 # ** Sampling
 
@@ -213,4 +216,5 @@ for i in range(argue.how_many):
         ts.write_vcf(vcf_file, individual_names=indv_names)
 # Plink doesn't like when individuals names end with "_0".
 # The previous lines modify sample names to avoid this problem.
+
 
