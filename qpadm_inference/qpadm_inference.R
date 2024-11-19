@@ -3,7 +3,7 @@
 list_of_packages <- c(
   "ggplot2", "devtools",
   "argparse", "stringr",
-  "Cairo"
+  "Cairo", "tibble"
 )
 
 for (i in list_of_packages) {
@@ -61,7 +61,8 @@ f2_blocks_for_single_model <- f2_from_geno(
 left_all <- list()
 right_all <- list()
 target_all <- list()
-for (i in nrow(all_models)) {
+
+for (i in 1:nrow(all_models)) {
   right_pops <- population_names[!(population_names %in% c(all_models[i, ], target))]
   ## `list_of_right_pops ` will include all the permutations of right populations where only 1 is missing
   list_of_right_pops <- lapply(1:(length(right_pops) - 2), FUN = function(x) {
@@ -76,8 +77,14 @@ for (i in nrow(all_models)) {
   }
 }
 
-?qpadm_multi
-    
+qp_models <- tibble(
+  left = left_all,
+  right = right_all,
+  target = target_all
+)
+
+?tibble
+
 ## right_pops <- population_names[!(population_names %in% all_models[1, ])]
 ## list_of_right_pops <- lapply(1:(length(right_pops) - 2), FUN = function(x) {
 ##   right_pops[-x]
