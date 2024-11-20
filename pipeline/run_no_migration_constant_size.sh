@@ -31,3 +31,6 @@ for file in ${LIST_OF_FILES[@]}; do
 done
 # --renameScaff
 # * Run ADMIXTOOLS and other Inference software
+
+## Runs R wrapper for qpadm inference.
+Rscript ../qpadm_inference/qpadm_inference.R $EIGENSTRAT_FOLDER $STATISTICS_FOLDER
