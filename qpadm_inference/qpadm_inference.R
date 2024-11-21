@@ -104,10 +104,15 @@ f2_blocks_for_single_model
 
 ## qpadm_multi iterates over a tibble whose rows represent
 ## right and left populations and target
-qpadm_multi(
+all_qpadms <- qpadm_multi(
   data = f2_blocks_for_single_model,
   models = qp_models
 )
+
+lazaridis_battlegrounds <- function( result_of_qpadm_multi ){
+  
+  
+}
 
 
 ### Following steps
