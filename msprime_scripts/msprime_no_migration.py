@@ -193,7 +193,7 @@ for i in range(argue.how_many):
         demography = demography,
         samples = all_samples,
         recombination_rate = 1e-8,
-        sequence_length = 1e+7,
+        sequence_length = 1e+8,
         ploidy = 2
     )
     mutated = msprime.sim_mutations( ts, rate = 1e-8, model = 'binary', discrete_genome = True, keep = False )
