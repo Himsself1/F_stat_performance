@@ -159,7 +159,7 @@ demography.add_admixture(
 # ** Create migration
 
 migration_time = 120
-migration_intensity = argue.intensity
+migration_intensity = argue.mig_ratio
 
 demography.add_mass_migration(
     time=migration_time,

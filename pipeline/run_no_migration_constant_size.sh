@@ -16,9 +16,7 @@ mkdir -p $STATISTICS_FOLDER
 python3 ../msprime_scripts/msprime_no_migration.py \
     -out_folder $VCF_FOLDER \
     -name no_migration_constant_size \
-    -how_many 1
-    
-## Need to record output folders
+    -how_many 500
 
 LIST_OF_FILES=$(find $VCF_FOLDER -type f -name "*.vcf" -exec readlink -f {} \;)
 
@@ -29,14 +27,14 @@ for file in ${LIST_OF_FILES[@]}; do
     prefix=${prefix%.vcf}
     python ../utility_scripts/gdc/vcf2eigenstrat.py -v $file -o $EIGENSTRAT_FOLDER$prefix
 done
-# --renameScaff
 
 ## Need to change CentiMorgan distance of the converted .snp files
 
 LIST_OF_snps=$(find $EIGENSTRAT_FOLDER -type f -name "*.snp" -exec readlink -f {} \;)
 for file in ${LIST_OF_snps[@]}; do
     ## Multiply position with recombination rate
-    awk '{ $3 = $4 * 1e-8 } 1' $file > $file".tmp"
+    awk '{ $3 = $4*1e-6 } 1' $file > $file".tmp"
+    # awk '{ $3 = (50/100)*log(1/(1-2*(1e-8)*$4)) } 1' $file > $file".tmp"
     mv $file".tmp" $file
 done
 

@@ -3,7 +3,8 @@
 list_of_packages <- c(
   "ggplot2", "devtools",
   "argparse", "stringr",
-  "Cairo", "tibble"
+  "Cairo", "tibble",
+  "reshape"
 )
 
 for (i in list_of_packages) {
@@ -27,7 +28,21 @@ input_files <- list.files(path = input_folder, pattern = ".geno", full.names = T
 input_files <- list.files(
   path = "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size/eig",
   pattern = ".geno", full.names = TRUE)
+
+snp_files <- list.files(
+  path = "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size/eig",
+  pattern = ".snp", full.names = TRUE)
 ###########
+
+# ** Swap Centi-Morgan information according to APOIKIA
+
+apoikia_snps <- read.table( "./apoikia.1240K.ANCIENT.snp")
+for( original_file in snp_files ){
+  original <- read.table( original_file )
+  original[,3] = apoikia_snps[1:nrow(original),3]
+  write.table(original, file=original_file,  sep="\t", col.names=F, row.names=F, quote=F)
+}
+
 
 ## Need to take the full path of the prefixes to pass to f2_blocks
 input_prefixes <- gsub(pattern = ".geno", replacement = "", input_files)
@@ -142,9 +157,6 @@ data_v1 <- data.frame(
   feasible_all = feasibility[rep( which(exclude == 'all'), each = 7 )]
 )
 
-p_values_005 <- data_v1$p_values < 0.05
-p_values_all_005 <- data_v1$p_values_all < 0.05
-
 # ** Scoring loop
 
 data_for_scoring_function <- as.data.frame( data_v1[exclude != "all",c(1,2,5,6,7,8,9)],
@@ -223,6 +235,18 @@ for( i in 1:nrow(data_for_scoring_function) ){
   }
 }
 data_for_scoring_function$score_stef <- score_stef
+
+data_for_single_sim_heatmap <- data_for_scoring_function[,c(1:3,8,9)]
+
+melted_single_sim_heatmap <- melt.data.frame( data_for_single_sim_heatmap, measure.vars = c("left_1", "left_2") )
+
+as.data.frame(melted_single_sim_heatmap %>%
+                dplyr::group_by(exclude,value) %>%
+                dplyr::summarise(score_stef = sum(score_stef),
+                                 scores = sum(scores) )
+              ) %>% dplyr::group_by(value) %>%
+  dplyr::summarise(score_stef = sum(score_stef),
+                   scores = sum(scores) )
 
 ### Following steps
 ## Make Lazaridis scheme DONE

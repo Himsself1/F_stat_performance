@@ -27,15 +27,17 @@ pathlib.Path(argue.out_folder).mkdir(parents = True, exist_ok = True) # Makes Ou
 
 ## These times are in generations
 
-split_time_2_3 = 80
-split_time_1_2_3 = 150
-split_time_0_1_2_3 = 200
-split_time_5_6 = 80
-split_time_7_5_6 = 150
-split_time_8_7_5_6 = 200
-split_time_ingroups = 400
-split_time_ingroups_out_2 = 500
-split_time_ancestral_all = 1000
+scale_factor = 1
+
+split_time_2_3 = 80 * scale_factor
+split_time_1_2_3 = 150 * scale_factor
+split_time_0_1_2_3 = 200 * scale_factor
+split_time_5_6 = 80 * scale_factor
+split_time_7_5_6 = 150 * scale_factor
+split_time_8_7_5_6 = 200 * scale_factor
+split_time_ingroups = 400 * scale_factor
+split_time_ingroups_out_2 = 500 * scale_factor
+split_time_ancestral_all = 1000 * scale_factor
 
 admixture_time = 40
 
@@ -181,7 +183,7 @@ demography.sort_events()
 
 # * Output naming
 
-names = [ pathlib.Path( argue.out_folder+"/"+argue.name+"rep_"+str(i)+".vcf" ) for i in range(argue.how_many) ]
+# names = [ pathlib.Path( argue.out_folder+"/"+argue.name+"rep_"+str(i)+".vcf" ) for i in range(argue.how_many) ]
 names = [ argue.out_folder+"/"+argue.name+"_rep_"+str(i)+".vcf" for i in range(argue.how_many) ]
 ##  Change "output.vcf"
 
@@ -192,11 +194,11 @@ for i in range(argue.how_many):
     ts = msprime.sim_ancestry(
         demography = demography,
         samples = all_samples,
-        recombination_rate = 1e-8,
+        recombination_rate = 5e-8,
         sequence_length = 1e+8,
         ploidy = 2
     )
-    mutated = msprime.sim_mutations( ts, rate = 1e-8, model = 'binary', discrete_genome = True, keep = False )
+    mutated = msprime.sim_mutations( ts, rate = 5e-8, model = 'binary', discrete_genome = True, keep = False )
 # ** Modifing individual names for PLiNK integration
     n_dip_indv = int(mutated.num_individuals)
     indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
@@ -208,3 +210,18 @@ for i in range(argue.how_many):
 # Plink doesn't like when individuals names end with "_0".
 # The previous lines modify sample names to avoid this problem.
 
+# ** Output Sample Metadata for the simulation
+
+samples = mutated.samples()
+sample_populations = mutated.individual_populations
+
+ind_metadata_filename = str(pathlib.Path(argue.out_folder).parent)+"/"+argue.name+"_model_metadata.tsv"
+
+n_dip_indv = int(mutated.num_individuals)
+indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
+df = pd.DataFrame({
+    'individual_id': indiv_names,
+    'population_name': [demographic_model.populations[pop_id].name for pop_id in mutated.individuals()]
+})
+
+df.to_csv('.tsv', sep='\t', index=False)

@@ -159,10 +159,14 @@ demography.add_admixture(
 # ** Create migration
 
 migration_time = 180
-migration_intensity = argue.intensity
+migration_intensity = argue.mig_ratio
 
 
-demography.add_mass_migration(migration_time, "ancestral_1_2_3" , "ancestral_5_6_7", )
+demography.add_mass_migration(
+    time=migration_time,
+    source="ancestral_1_2_3",
+    dest="ancestral_7_5_6",
+    proportion=migration_intensity)
 
 # ** Sampling
 
