@@ -1,7 +1,7 @@
 #! /bin/bash
 
 MASTER_OUT_FOLDER="/home/stefanos/new_storage/inference_estimation/"
-MODEL_FOLDER="sequencies/no_migration_constant_size"
+MODEL_FOLDER="sequencies/no_migration_constant_size_scale_2"
 VCF_FOLDER=$MASTER_OUT_FOLDER$MODEL_FOLDER"/vcf/"
 EIGENSTRAT_FOLDER=$MASTER_OUT_FOLDER$MODEL_FOLDER"/eig/"
 STATISTICS_FOLDER=$MASTER_OUT_FOLDER"statistics"
@@ -17,7 +17,7 @@ python3 ../msprime_scripts/msprime_no_migration.py \
     -out_folder $VCF_FOLDER \
     -name no_migration_constant_size \
     -how_many 100 \
-    -scale 1
+    -scale 2
 
 LIST_OF_FILES=$(find $VCF_FOLDER -type f -name "*.vcf" -exec readlink -f {} \;)
 

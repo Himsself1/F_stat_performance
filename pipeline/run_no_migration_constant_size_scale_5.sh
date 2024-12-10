@@ -1,7 +1,7 @@
 #! /bin/bash
 
 MASTER_OUT_FOLDER="/home/stefanos/new_storage/inference_estimation/"
-MODEL_FOLDER="sequencies/no_migration_constant_size"
+MODEL_FOLDER="sequencies/no_migration_constant_size_scale_5"
 VCF_FOLDER=$MASTER_OUT_FOLDER$MODEL_FOLDER"/vcf/"
 EIGENSTRAT_FOLDER=$MASTER_OUT_FOLDER$MODEL_FOLDER"/eig/"
 STATISTICS_FOLDER=$MASTER_OUT_FOLDER"statistics"
@@ -17,12 +17,12 @@ python3 ../msprime_scripts/msprime_no_migration.py \
     -out_folder $VCF_FOLDER \
     -name no_migration_constant_size \
     -how_many 100 \
-    -scale 1
+    -scale 5
 
 LIST_OF_FILES=$(find $VCF_FOLDER -type f -name "*.vcf" -exec readlink -f {} \;)
 
 # * Convert vcf output to eigenstrat
-"${LIST_OF_FILES[@]}"
+
 for file in ${LIST_OF_FILES[@]}; do
     prefix=$(basename "$file")
     prefix=${prefix%.vcf}
@@ -38,7 +38,6 @@ for file in ${LIST_OF_snps[@]}; do
     # awk '{ $3 = (50/100)*log(1/(1-2*(1e-8)*$4)) } 1' $file > $file".tmp"
     mv $file".tmp" $file
 done
-
 
 # * Run ADMIXTOOLS and other Inference software
 

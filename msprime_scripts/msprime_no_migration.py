@@ -17,6 +17,9 @@ cli.add_argument( "-name", type = str, required = True,
                   help = "Name prefix of output vcf files.")
 cli.add_argument( "-how_many", type = int, default = 1,
                   help = 'How many simulations are going to be run in one go.' )
+cli.add_argument( "-scale", type = float, default = 1,
+                  help = 'Scale all branch length by `scale`. It cannot be <= 0.5' )
+
 argue = cli.parse_args()
 
 pathlib.Path(argue.out_folder).mkdir(parents = True, exist_ok = True) # Makes Output directories
@@ -27,7 +30,7 @@ pathlib.Path(argue.out_folder).mkdir(parents = True, exist_ok = True) # Makes Ou
 
 ## These times are in generations
 
-scale_factor = 1
+scale_factor = argue.scale
 
 split_time_2_3 = 80 * scale_factor
 split_time_1_2_3 = 150 * scale_factor
@@ -159,21 +162,21 @@ demography.add_admixture(
 
 # ** Sampling
 
-sampling_scheme_0 = msprime.SampleSet( 5, population = "pop_0", time = 0 )
-sampling_scheme_1 = msprime.SampleSet( 5, population = "pop_1", time = 0 )
-sampling_scheme_2 = msprime.SampleSet( 5, population = "pop_2", time = 0 )
-sampling_scheme_3 = msprime.SampleSet( 5, population = "pop_3", time = 0 )
-sampling_scheme_4 = msprime.SampleSet( 5, population = "pop_4", time = 0 )
-sampling_scheme_5 = msprime.SampleSet( 5, population = "pop_5", time = 0 )
-sampling_scheme_6 = msprime.SampleSet( 5, population = "pop_6", time = 0 )
-sampling_scheme_7 = msprime.SampleSet( 5, population = "pop_7", time = 0 )
-sampling_scheme_8 = msprime.SampleSet( 5, population = "pop_8", time = 0 )
+sampling_scheme_0 = msprime.SampleSet( 10, population = "pop_0", time = 0 )
+sampling_scheme_1 = msprime.SampleSet( 10, population = "pop_1", time = 0 )
+sampling_scheme_2 = msprime.SampleSet( 10, population = "pop_2", time = 0 )
+sampling_scheme_3 = msprime.SampleSet( 10, population = "pop_3", time = 0 )
+sampling_scheme_4 = msprime.SampleSet( 10, population = "pop_4", time = 0 )
+sampling_scheme_5 = msprime.SampleSet( 10, population = "pop_5", time = 0 )
+sampling_scheme_6 = msprime.SampleSet( 10, population = "pop_6", time = 0 )
+sampling_scheme_7 = msprime.SampleSet( 10, population = "pop_7", time = 0 )
+sampling_scheme_8 = msprime.SampleSet( 10, population = "pop_8", time = 0 )
 
 sampling_scheme_out_1 = msprime.SampleSet( 10, population = "outpop_1", time = 0 )
 sampling_scheme_out_0 = msprime.SampleSet( 10, population = "outpop_0", time = 0 )
 
 # Merge all the lists of samples
-all_samples = [sampling_scheme_0, sampling_scheme_1, sampling_scheme_1, sampling_scheme_3, sampling_scheme_4, sampling_scheme_5, sampling_scheme_6, sampling_scheme_7, sampling_scheme_8, sampling_scheme_out_1, sampling_scheme_out_0]
+all_samples = [sampling_scheme_0, sampling_scheme_1, sampling_scheme_2, sampling_scheme_3, sampling_scheme_4, sampling_scheme_5, sampling_scheme_6, sampling_scheme_7, sampling_scheme_8, sampling_scheme_out_1, sampling_scheme_out_0]
 
 # ** Sorting events
 
@@ -189,39 +192,69 @@ names = [ argue.out_folder+"/"+argue.name+"_rep_"+str(i)+".vcf" for i in range(a
 
 # * Start the simulation
 
+ind_metadata_filename = str(pathlib.Path(argue.out_folder).parent)+"/"+argue.name+"_model_metadata.tsv"
+# print(ind_metadata_filename)
+# exit()
+
 for i in range(argue.how_many):
-    
     ts = msprime.sim_ancestry(
         demography = demography,
         samples = all_samples,
-        recombination_rate = 5e-8,
+        recombination_rate = 1.25e-7,
         sequence_length = 1e+8,
         ploidy = 2
     )
-    mutated = msprime.sim_mutations( ts, rate = 5e-8, model = 'binary', discrete_genome = True, keep = False )
+    mutated = msprime.sim_mutations( ts, rate = 1.25e-8, model = 'binary', discrete_genome = True, keep = False )
 # ** Modifing individual names for PLiNK integration
     n_dip_indv = int(mutated.num_individuals)
     indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
     with open(names[i], "w") as vcf_file:
         mutated.write_vcf(
             vcf_file,
-            contig_id = '1',  individual_names=indv_names
+            contig_id = 'chr1',
+            individual_names=indv_names
             )
+    vcf_file.close()
 # Plink doesn't like when individuals names end with "_0".
 # The previous lines modify sample names to avoid this problem.
 
+# for i in range(1):
+#     ts = msprime.sim_ancestry(
+#         demography = demography,
+#         samples = all_samples,
+#         recombination_rate = 1.25e-7,
+#         sequence_length = 1e+8,
+#         ploidy = 2
+#     )
+#     mutated = msprime.sim_mutations( ts, rate = 1.25e-8, model = 'binary', discrete_genome = True, keep = False )
+#     n_dip_indv = int(mutated.num_individuals)
+#     indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
+#     with open(names[i], "w") as vcf_file:
+#         mutated.write_vcf(
+#             vcf_file,
+#             contig_id = 'chr1',
+#             individual_names=indv_names
+#             )
+#     vcf_file.close()
+# # Plink doesn't like when individuals names end with "_0".
+# # The previous lines modify sample names to avoid this problem.
+
+
 # ** Output Sample Metadata for the simulation
 
-samples = mutated.samples()
-sample_populations = mutated.individual_populations
+# samples = mutated.samples()
+# sample_populations = mutated.individual_populations
 
-ind_metadata_filename = str(pathlib.Path(argue.out_folder).parent)+"/"+argue.name+"_model_metadata.tsv"
+# n_dip_indv = int(mutated.num_individuals)
+# indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
+
 
 n_dip_indv = int(mutated.num_individuals)
 indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
-df = pd.DataFrame({
-    'individual_id': indiv_names,
-    'population_name': [demographic_model.populations[pop_id].name for pop_id in mutated.individuals()]
-})
-
-df.to_csv('.tsv', sep='\t', index=False)
+    
+with open(ind_metadata_filename, 'w') as metadata:
+    metadata.write("Ind_ID\tPopulation\n")
+    for i, ind_id in enumerate(mutated.individuals()):
+        # print(f"{indv_names[i]}\t{demography.populations[ind_id.population].name}\n")
+        metadata.write(f"{indv_names[i]}\t{demography.populations[ind_id.population].name}\n")
+metadata.close()
