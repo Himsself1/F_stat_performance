@@ -147,7 +147,7 @@ plot_accepted_models_2d <- funtion( list_of_accepted_models_2d, all_ancestors, t
     color = "white",
     size = 3
   )
-  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + labs(title = "Scale 0.5")
+  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + labs(title = titlos)
   heatmapap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + theme(
     axis.title.x = element_blank(),
     axis.title.y = element_blank()
