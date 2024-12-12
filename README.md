@@ -5,8 +5,7 @@
 ### Models with just migration
 
 | From | To | Time | Intensity |
-================================
-
+| --- | --- | --- | --- |
 | Anc_123  | Anc_567  | 180 | 0.01 |
 | Anc_123  | Anc_567  | 180 | 0.03 |
 | Anc_123  | Anc_567  | 180 | 0.05 |
