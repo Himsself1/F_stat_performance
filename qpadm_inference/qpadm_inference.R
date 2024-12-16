@@ -4,7 +4,7 @@ list_of_packages <- c(
   "ggplot2", "devtools",
   "argparse", "stringr",
   "Cairo", "tibble",
-  "reshape"
+  "reshape", "dplyr"
 )
 
 for (i in list_of_packages) {
@@ -12,6 +12,8 @@ for (i in list_of_packages) {
     install.packages(i, dependencies = T)
   }
 }
+
+source( "./qpadm_inference/best_populations_plot_funtions.R" )
 
 devtools::install_github("uqrmaie1/admixtools")
 library(admixtools)
@@ -49,23 +51,20 @@ snp_files <- list.files(path = input_folder_scale_5, pattern = ".snp", full.name
 ###########
 
 input_prefixes <- gsub(pattern = ".geno", replacement = "", input_files)
+parent_dir <- dirname(input_folder)
+metadata_file <- list.files(path = parent_dir, pattern = ".tsv", full_names = TRUE)
 
-# ** Swap Centi-Morgan information according to APOIKIA
-
-## apoikia_snps <- read.table( "./apoikia.1240K.ANCIENT.snp")
-
-## for( original_file in 1:length(snp_files[i]) ){
-##   original <- read.table( snp_files[original_file] )
-##   original[,3] = original[,3]/10
-##   ## original[,3] = apoikia_snps[1:nrow(original),3]
-##   write.table(original, file=snp_files[original_file],  sep="\t", col.names=F, row.names=F, quote=F)
-## }
-
-## Need to take the full path of the prefixes to pass to f2_blocks
+base_dir <- basename(parent_dir) ## Name of the parent folder of the simulation.
+output_folder_for_plots <- paste0(output_folder, "/plots/", base_dir, collapse = '')
+output_folder_for_stats <- paste0(output_folder, "/statistics/", base_dir, collapse = '')
+dir.create( output_folder_for_plots, recursive = TRUE )
+dir.create( output_folder_for_stats, recursive = TRUE )
 
 # * Data Preprocessing
 
 # ** Assignment of individuals to populations 
+
+metadata_info <- read.table( metadata_file, header = T, sep = '\t' )
 
 ## Each of the 9 populations have 5 samples.
 ## Each of the outgroup populations have 10 samples.
@@ -87,9 +86,8 @@ outgroups <- rep(sapply(1:0, function(x) {
 ## f2_blocks needs a vector with individual names and another vector
 ## of equal size that specifies the population of each individual.
 individuals_in_populations <- c(normal_pops, outgroups)
-population_names <- unique(individuals_in_populations)
-individual_names <- paste("tsk_", c(0:109), "indv", sep = "")
-## individual_names <- paste("tsk_", c(0:89, 100:109), "indv", sep = "")
+population_names <- unique(metadata_info$Population)
+individual_names <- metadata_info$Ind_ID
 
 target <- "pop_4"
 all_ancestors <- paste("pop_", c(0:3,5:8), sep = '')
@@ -351,22 +349,74 @@ for (rep in 1:length(input_prefixes)) {
         ## This shows how many times a population is the winner
 
         best_pops <- as.data.frame(results_versus_2nd_dim %>%
-                dplyr::group_by(left) %>%
-                dplyr::summarise(score = sum(score)) %>%
-                dplyr::arrange(dplyr::desc(score)))
+                group_by(left) %>%
+                summarise(score = sum(score)) %>%
+                arrange(desc(score)))
 
         best_pops_2D <- as.data.frame(results_versus %>%
-                dplyr::group_by(left, exclude) %>%
-                dplyr::summarise(score = as.numeric(sum(direction))))
+                group_by(left, exclude) %>%
+                summarise(score = as.numeric(sum(direction))))
 
         list_of_all_summaries$best_pops[[rep]] <- best_pops
         list_of_all_summaries$best_pops_2D[[rep]] <- best_pops_2D
 }
 
-length(list_of_all_summaries$best_pops)
-
 
 # * Plotting
+
+# ** Names of files
+
+best_population_plot_name <- paste0(
+  c( output_folder_for_plots, "/",
+    base_dir, "_best_pops.pdf"),
+  collapse = "")
+
+best_population_pair_plot_name <- paste0(
+  c( output_folder_for_plots, "/",
+    base_dir, "_best_pop_pair.pdf"),
+  collapse = "")
+
+accepted_models_plot_name <- paste0(
+  c( output_folder_for_plots, "/",
+    base_dir, "_accepted_models.pdf"),
+  collapse = "")
+
+accepted_models_2d_plot_name <- paste0(
+  c( output_folder_for_plots, "/",
+    base_dir, "_accepted_models_2d.pdf"),
+  collapse = "")
+
+
+# ** Calling functions
+
+barplot_of_accepted_models <- plot_accepted_models(
+  list_of_all_summaries$accepted_models,
+  all_ancestors,
+  ""
+)
+
+heatmap_of_accepted_models_2d <- plot_accepted_models_2d(
+  list_of_all_summaries$accepted_models_2d,
+  all_ancestors,
+  ""
+)
+
+barplot_of_best_populations <- plot_best_2_pops(
+  list_of_all_summaries$best_pops,
+  all_ancestors,
+  ""
+)
+
+CairoPDF( best_2_pops_barplot_name )
+barplot_of_best_populations
+dev.off()
+
+
+heatmap_of_best_pop_pair <- plot_best_pop_pair(
+  list_of_all_summaries$best_pops_2D,
+  all_ancestors,
+  ""
+)
 
 output_folder <- "/media/storage/stef_sim/inference_estimation/plots"
 

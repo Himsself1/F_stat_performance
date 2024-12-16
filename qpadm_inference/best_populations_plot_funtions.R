@@ -130,7 +130,7 @@ plot_accepted_models <- function( list_of_accepted_models, all_ancestors, titlos
 ## Number of models of "population pair" that are accepted divided by
 ## all the possible models that the population pair can take part in.
 
-plot_accepted_models_2d <- funtion( list_of_accepted_models_2d, all_ancestors, titlos = "" ){
+plot_accepted_models_2d <- function( list_of_accepted_models_2d, all_ancestors, titlos = "" ){
 
   melted_accepted_models_2d <- melt(Reduce("+", list_of_accepted_models_2d) / length(list_of_accepted_models_2d), na.rm = TRUE)
   melted_accepted_models_2d <- melted_accepted_models_2d[!is.nan(melted_accepted_models_2d$value), ]
