@@ -1,7 +1,7 @@
 # * Libraries
 
-list_of_packages <- c(
-  "ggplot2", "devtools",
+list_of_packages <- c( 
+ "ggplot2", "devtools",
   "argparse", "stringr",
   "Cairo", "tibble",
   "reshape", "dplyr"
@@ -24,19 +24,20 @@ args<-commandArgs(TRUE)
 input_folder <- args[1]
 output_folder <- args[2]
 
-input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size/eig"
-input_folder_scale_2 <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size_scale_2/eig"
-input_folder_scale_5 <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size_scale_5/eig"
-
 input_files <- list.files(path = input_folder, pattern = ".geno", full.names = TRUE)
 snp_files <- list.files(path = input_folder, pattern = ".snp", full.names = TRUE)
 
-input_files <- list.files(path = input_folder_scale_2, pattern = ".geno", full.names = TRUE)
-snp_files <- list.files(path = input_folder_scale_2, pattern = ".snp", full.names = TRUE)
+## Debugging purposes ##
+## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size/eig"
+## input_folder_scale_2 <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size_scale_2/eig"
+## input_folder_scale_5 <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size_scale_5/eig"
 
-input_files <- list.files(path = input_folder_scale_5, pattern = ".geno", full.names = TRUE)
-snp_files <- list.files(path = input_folder_scale_5, pattern = ".snp", full.names = TRUE)
+## input_files <- list.files(path = input_folder_scale_2, pattern = ".geno", full.names = TRUE)
+## snp_files <- list.files(path = input_folder_scale_2, pattern = ".snp", full.names = TRUE)
 
+## input_files <- list.files(path = input_folder_scale_5, pattern = ".geno", full.names = TRUE)
+## snp_files <- list.files(path = input_folder_scale_5, pattern = ".snp", full.names = TRUE)
+########################
 
 ## parent_folder <- dirname(input_folder)
 
@@ -147,7 +148,7 @@ list_of_all_summaries <- list(
 )
 
 for (rep in 1:length(input_prefixes)) {
-        # ** Run F2 and qpAdm
+# ** Run F2 and qpAdm
 
         f2_blocks_for_single_model <- f2_from_geno(
                 pref = input_prefixes[rep],
@@ -175,7 +176,7 @@ for (rep in 1:length(input_prefixes)) {
                 p_values <- c(p_values, all_qpadms[[i]]$popdrop[1, 5])
         }
 
-        ## `data_v1` will be the data frame with all the information tidied up
+  ## `data_v1` will be the data frame with all the information tidied up
   ## In the final data frame, `p_value_all` and `feasible_all` show the p_value and
   ## feasibility of the model that doesn't exclude the respective population.
         data_v1 <- data.frame(
@@ -387,27 +388,32 @@ accepted_models_2d_plot_name <- paste0(
   collapse = "")
 
 
-# ** Calling functions
+# ** Calling functions & Printing plots
 
 barplot_of_accepted_models <- plot_accepted_models(
   list_of_all_summaries$accepted_models,
   all_ancestors,
   ""
 )
+CairoPDF( accepted_models_plot_name )
+barplot_of_accepted_models
+dev.off()
 
 heatmap_of_accepted_models_2d <- plot_accepted_models_2d(
   list_of_all_summaries$accepted_models_2d,
   all_ancestors,
   ""
 )
+CairoPDF( accepted_models_2d_plot_name )
+heatmap_of_accepted_models_2d
+dev.off()
 
 barplot_of_best_populations <- plot_best_2_pops(
   list_of_all_summaries$best_pops,
   all_ancestors,
   ""
 )
-
-CairoPDF( best_2_pops_barplot_name )
+CairoPDF( best_population_plot_name )
 barplot_of_best_populations
 dev.off()
 
@@ -417,418 +423,424 @@ heatmap_of_best_pop_pair <- plot_best_pop_pair(
   all_ancestors,
   ""
 )
-
-output_folder <- "/media/storage/stef_sim/inference_estimation/plots"
-
-# ** Scale 1
-
-# *** 2 Best Pops
-
-## % of simulation that "population" was among the 2 best.
-
-best_2_pops_barplot_name <- paste0(c( output_folder, "/best_2_pops.pdf" ), collapse = '')
-
-best_2_populations <- melt(do.call(rbind, lapply(1:rep, function(x) {
-        as.character(list_of_all_summaries$best_pops[[x]][1:2, 1])
-})))
-
-best_2_for_barplot <- data.frame(
-        onomata = factor(names(table(factor(best_2_populations[, 3], levels = all_ancestors))), levels = all_ancestors),
-        values = as.vector(table(best_2_populations[, 3]))
-)
-
-barplot_of_best_2_pops <- ggplot(best_2_for_barplot, aes(x = onomata, y = as.numeric(values)))
-barplot_of_best_2_pops <- barplot_of_best_2_pops + geom_bar(stat = "identity", fill = "steelblue")
-barplot_of_best_2_pops <- barplot_of_best_2_pops + geom_text(
-  aes(label = values),
-  vjust = -0.3, size = 4
-)
-barplot_of_best_2_pops <- barplot_of_best_2_pops + theme(
-        axis.title = element_blank()
-)
-barplot_of_best_2_pops <- barplot_of_best_2_pops + labs(
-        title = "Scale 0.5"
-)
-
-
-CairoPDF( best_2_pops_barplot_name )
-barplot_of_best_2_pops
+CairoPDF( best_population_pair_plot_name )
+heatmap_of_best_pop_pair
 dev.off()
 
-# *** 2 Best Pops 2D
-
-## % of simulation that "population pair" was among the best pair.
-
-heatmap_of_best_two_pops_2d_plot_name <- paste0(c( output_folder, "/best_2_pops_2d.pdf" ), collapse = '')
-
-best_two_pops_2d <- as.data.frame(do.call(rbind, lapply(1:rep, function(x) {
-  sort(as.character(list_of_all_summaries$best_pops[[x]][1:2, 1]))
-})))
-names(best_two_pops_2d) <- c("best_1", "best_2")
-
-best_two_pops_2d$best_1 <- factor(best_two_pops_2d$best_1, levels = all_ancestors)
-best_two_pops_2d$best_2 <- factor(best_two_pops_2d$best_2, levels = all_ancestors)
-
-melted_best_two_pops_2d <- melt(table(best_two_pops_2d) / 100)
-triangle <- as.character(melted_best_two_pops_2d$best_1) < as.character(melted_best_two_pops_2d$best_2)
-
-heatmap_of_best_two_pops_2d <- ggplot(melted_best_two_pops_2d[triangle, ], aes(x = best_1, y = best_2, fill = value))
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + geom_tile(
-        color = "white",
-        lwd = 0.4,
-        linetype = 1
-)
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + geom_text(
-  aes(label = value),
-  color = "white",
-  size = 3
-)
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + labs(title = "Scale 0.5")
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + theme(
-  axis.title.x = element_blank(),
-  axis.title.y = element_blank()
-)
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
-
-CairoPDF( heatmap_of_best_two_pops_2d_plot_name )
-heatmap_of_best_two_pops_2d
-dev.off()
-
-# *** Acceplted Models
-
-## Number of models of "population" that are accepted divided by
-## all the possible models that the population can take part in.
-
-average_accepted_models_plot_name <- paste0(
-  c(output_folder, "/average_accepted_models.pdf"),
-        collapse = ""
-)
-
-average_accepted_models <- colMeans( do.call(rbind, list_of_all_summaries$accepted_models) )
-average_accepted_models_for_barplot <- data.frame(
-        onomata = factor(names(average_accepted_models), levels = all_ancestors),
-        values = as.numeric(sprintf("%.4f", average_accepted_models))
-)
-
-barplot_of_accepted_models <- ggplot(average_accepted_models_for_barplot, aes(x = onomata, y = as.numeric(values)))
-barplot_of_accepted_models <- barplot_of_accepted_models + geom_bar(stat = "identity", fill = "steelblue")
-barplot_of_accepted_models <- barplot_of_accepted_models + geom_text(
-  aes(label = values),
-  vjust = -0.3, size = 4
-)
-barplot_of_accepted_models <- barplot_of_accepted_models + labs(
-        title = "Scale 0.5"
-)
-barplot_of_accepted_models <- barplot_of_accepted_models + theme(
-        axis.title = element_blank()
-)
-
-CairoPDF( average_accepted_models_plot_name )
-barplot_of_accepted_models
-dev.off()
-
-# *** Accepted Models 2D
-
-## Number of models of "population pair" that are accepted divided by
-## all the possible models that the population pair can take part in.
-
-heatmap_of_accepted_models_2D_plot_name <- paste0(
-        c(output_folder, "/accepted_models_2d.pdf"),
-        collapse = ""
-)
-
-melted_accepted_models_2d <- melt(Reduce("+", list_of_all_summaries$accepted_models_2d) / 100, na.rm = TRUE)
-melted_accepted_models_2d <- melted_accepted_models_2d[!is.nan(melted_accepted_models_2d$value), ]
-melted_accepted_models_2d$value  <- as.numeric(sprintf("%.4f", melted_accepted_models_2d$value))
-
-heatmap_of_accepted_models_plot_2D <- ggplot(melted_accepted_models_2d, aes( x = left_1, y = left_2, fill = value))
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + geom_tile(
-        color = "white",
-        lwd = 0.4,
-        linetype = 1
-)
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + geom_text(
-  aes(label = value),
-  color = "white",
-  size = 3
-)
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + labs(title = "Scale 0.5")
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + theme(
-  axis.title.x = element_blank(),
-  axis.title.y = element_blank()
-)
-## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + theme_minimal()
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
-
-CairoPDF( heatmap_of_accepted_models_2D_plot_name )
-heatmap_of_accepted_models_plot_2D
-dev.off()
-
-# ** Scale 2
-
-# *** 2 Best Pops
-
-best_2_pops_barplot_name <- paste0(c( output_folder, "/best_2_pops_scale_2.pdf" ), collapse = '')
-
-best_2_populations <- melt(do.call(rbind, lapply(1:rep, function(x) {
-        as.character(list_of_all_summaries$best_pops[[x]][1:2, 1])
-})))
-
-best_2_for_barplot <- data.frame(
-  onomata = factor(names(table(factor(best_2_populations[, 3], levels = all_ancestors))), levels = all_ancestors),
-        values = as.vector(table(factor(best_2_populations[, 3], levels = all_ancestors)))
-)
-
-barplot_of_best_2_pops <- ggplot(best_2_for_barplot, aes(x = onomata, y = as.numeric(values)))
-barplot_of_best_2_pops <- barplot_of_best_2_pops + geom_bar(stat = "identity", fill = "steelblue")
-barplot_of_best_2_pops <- barplot_of_best_2_pops + geom_text(
-  aes(label = values),
-  vjust = -0.3, size = 4
-)
-barplot_of_best_2_pops <- barplot_of_best_2_pops + theme(
-        axis.title = element_blank()
-)
-barplot_of_best_2_pops <- barplot_of_best_2_pops + labs(
-        title = "Scale 1"
-)
-
-
-CairoPDF( best_2_pops_barplot_name )
-barplot_of_best_2_pops
-dev.off()
-
-# *** 2 Best Pops 2D
-
-heatmap_of_best_two_pops_2d_plot_name <- paste0(c( output_folder, "/best_2_pops_2d_scale_2.pdf" ), collapse = '')
-
-best_two_pops_2d <- as.data.frame(do.call(rbind, lapply(1:rep, function(x) {
-  sort(as.character(list_of_all_summaries$best_pops[[x]][1:2, 1]))
-})))
-names(best_two_pops_2d) <- c("best_1", "best_2")
-
-best_two_pops_2d$best_1 <- factor(best_two_pops_2d$best_1, levels = all_ancestors)
-best_two_pops_2d$best_2 <- factor(best_two_pops_2d$best_2, levels = all_ancestors)
-
-melted_best_two_pops_2d <- melt(table(best_two_pops_2d) / 100)
-triangle <- as.character(melted_best_two_pops_2d$best_1) < as.character(melted_best_two_pops_2d$best_2)
-
-heatmap_of_best_two_pops_2d <- ggplot(melted_best_two_pops_2d[triangle, ], aes(x = best_1, y = best_2, fill = value))
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + geom_tile(
-        color = "white",
-        lwd = 0.4,
-        linetype = 1
-)
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + geom_text(
-  aes(label = value),
-  color = "white",
-  size = 3
-)
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + labs(title = "Scale 1")
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + theme(
-  axis.title.x = element_blank(),
-  axis.title.y = element_blank()
-)
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
-
-CairoPDF( heatmap_of_best_two_pops_2d_plot_name )
-heatmap_of_best_two_pops_2d
-dev.off()
-
-# *** Acceplted Models
-
-average_accepted_models_plot_name <- paste0(
-  c(output_folder, "/average_accepted_models_scale_2.pdf"),
-        collapse = ""
-)
-
-average_accepted_models <- colMeans( do.call(rbind, list_of_all_summaries$accepted_models) )
-average_accepted_models_for_barplot <- data.frame(
-        onomata = factor(names(average_accepted_models), levels = all_ancestors),
-        values = as.numeric(sprintf("%.4f", average_accepted_models))
-)
-
-barplot_of_accepted_models <- ggplot(average_accepted_models_for_barplot, aes(x = onomata, y = as.numeric(values)))
-barplot_of_accepted_models <- barplot_of_accepted_models + geom_bar(stat = "identity", fill = "steelblue")
-barplot_of_accepted_models <- barplot_of_accepted_models + geom_text(
-  aes(label = values),
-  vjust = -0.3, size = 4
-)
-barplot_of_accepted_models <- barplot_of_accepted_models + labs(
-        title = "Scale 1"
-)
-barplot_of_accepted_models <- barplot_of_accepted_models + theme(
-        axis.title = element_blank()
-)
-
-CairoPDF( average_accepted_models_plot_name )
-barplot_of_accepted_models
-dev.off()
-
-# *** Accepted Models 2D
-
-heatmap_of_accepted_models_2D_plot_name <- paste0(
-        c(output_folder, "/accepted_models_2d_scale_2.pdf"),
-        collapse = ""
-)
-
-melted_accepted_models_2d <- melt(Reduce("+", list_of_all_summaries$accepted_models_2d) / 100, na.rm = TRUE)
-melted_accepted_models_2d <- melted_accepted_models_2d[!is.nan(melted_accepted_models_2d$value), ]
-melted_accepted_models_2d$value  <- as.numeric(sprintf("%.4f", melted_accepted_models_2d$value))
-
-heatmap_of_accepted_models_plot_2D <- ggplot(melted_accepted_models_2d, aes( x = left_1, y = left_2, fill = value))
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + geom_tile(
-        color = "white",
-        lwd = 0.4,
-        linetype = 1
-)
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + geom_text(
-  aes(label = value),
-  color = "white",
-  size = 3
-)
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + labs(title = "Scale 1")
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + theme(
-  axis.title.x = element_blank(),
-  axis.title.y = element_blank()
-)
-## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + theme_minimal()
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
-
-CairoPDF( heatmap_of_accepted_models_2D_plot_name )
-heatmap_of_accepted_models_plot_2D
-dev.off()
-
-# ** Scale 5
-
-# *** 2 Best Pops
-
-best_2_pops_barplot_name <- paste0(c( output_folder, "/best_2_pops_scale_5.pdf" ), collapse = '')
-
-best_2_populations <- melt(do.call(rbind, lapply(1:rep, function(x) {
-        as.character(list_of_all_summaries$best_pops[[x]][1:2, 1])
-})))
-
-best_2_for_barplot <- data.frame(
-  onomata = factor(names(table(factor(best_2_populations[, 3], levels = all_ancestors))), levels = all_ancestors),
-        values = as.vector(table(best_2_populations[, 3]))
-)
-
-barplot_of_best_2_pops <- ggplot(best_2_for_barplot, aes(x = onomata, y = as.numeric(values)))
-barplot_of_best_2_pops <- barplot_of_best_2_pops + geom_bar(stat = "identity", fill = "steelblue")
-barplot_of_best_2_pops <- barplot_of_best_2_pops + geom_text(
-  aes(label = values),
-  vjust = -0.3, size = 4
-)
-barplot_of_best_2_pops <- barplot_of_best_2_pops + theme(
-        axis.title = element_blank()
-)
-barplot_of_best_2_pops <- barplot_of_best_2_pops + labs(
-        title = "Scale 2.5"
-)
-
-
-CairoPDF( best_2_pops_barplot_name )
-barplot_of_best_2_pops
-dev.off()
-
-# *** 2 Best Pops 2D
-
-
-heatmap_of_best_two_pops_2d_plot_name <- paste0(c( output_folder, "/best_2_pops_2d_scale_5.pdf" ), collapse = '')
-
-best_two_pops_2d <- as.data.frame(do.call(rbind, lapply(1:rep, function(x) {
-  sort(as.character(list_of_all_summaries$best_pops[[x]][1:2, 1]))
-})))
-names(best_two_pops_2d) <- c("best_1", "best_2")
-
-best_two_pops_2d$best_1 <- factor(best_two_pops_2d$best_1, levels = all_ancestors)
-best_two_pops_2d$best_2 <- factor(best_two_pops_2d$best_2, levels = all_ancestors)
-
-melted_best_two_pops_2d <- melt(table(best_two_pops_2d) / 100)
-triangle <- as.character(melted_best_two_pops_2d$best_1) < as.character(melted_best_two_pops_2d$best_2)
-
-heatmap_of_best_two_pops_2d <- ggplot(melted_best_two_pops_2d[triangle, ], aes(x = best_1, y = best_2, fill = value))
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + geom_tile(
-        color = "white",
-        lwd = 0.4,
-        linetype = 1
-)
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + geom_text(
-  aes(label = value),
-  color = "white",
-  size = 3
-)
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + labs(title = "Scale 2.5")
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + theme(
-  axis.title.x = element_blank(),
-  axis.title.y = element_blank()
-)
-heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
-
-CairoPDF( heatmap_of_best_two_pops_2d_plot_name )
-heatmap_of_best_two_pops_2d
-dev.off()
-
-# *** Acceplted Models
-
-average_accepted_models_plot_name <- paste0(
-  c(output_folder, "/average_accepted_models_scale_5.pdf"),
-        collapse = ""
-)
-
-average_accepted_models <- colMeans( do.call(rbind, list_of_all_summaries$accepted_models) )
-average_accepted_models_for_barplot <- data.frame(
-        onomata = factor(names(average_accepted_models), levels = all_ancestors),
-        values = as.numeric(sprintf("%.4f", average_accepted_models))
-)
-
-barplot_of_accepted_models <- ggplot(average_accepted_models_for_barplot, aes(x = onomata, y = as.numeric(values)))
-barplot_of_accepted_models <- barplot_of_accepted_models + geom_bar(stat = "identity", fill = "steelblue")
-barplot_of_accepted_models <- barplot_of_accepted_models + geom_text(
-  aes(label = values),
-  vjust = -0.3, size = 4
-)
-barplot_of_accepted_models <- barplot_of_accepted_models + labs(
-        title = "Scale 2.5"
-)
-barplot_of_accepted_models <- barplot_of_accepted_models + theme(
-        axis.title = element_blank()
-)
-
-CairoPDF( average_accepted_models_plot_name )
-barplot_of_accepted_models
-dev.off()
-
-# *** Accepted Models 2D
-
-heatmap_of_accepted_models_2D_plot_name <- paste0(
-        c(output_folder, "/accepted_models_2d_scale_5.pdf"),
-        collapse = ""
-)
-
-melted_accepted_models_2d <- melt(Reduce("+", list_of_all_summaries$accepted_models_2d) / 100, na.rm = TRUE)
-melted_accepted_models_2d <- melted_accepted_models_2d[!is.nan(melted_accepted_models_2d$value), ]
-melted_accepted_models_2d$value  <- as.numeric(sprintf("%.4f", melted_accepted_models_2d$value))
-
-heatmap_of_accepted_models_plot_2D <- ggplot(melted_accepted_models_2d, aes( x = left_1, y = left_2, fill = value))
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + geom_tile(
-        color = "white",
-        lwd = 0.4,
-        linetype = 1
-)
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + geom_text(
-  aes(label = value),
-  color = "white",
-  size = 3
-)
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + labs(title = "Scale 2.5")
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + theme(
-  axis.title.x = element_blank(),
-  axis.title.y = element_blank()
-)
-## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + theme_minimal()
-heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
-
-CairoPDF( heatmap_of_accepted_models_2D_plot_name )
-heatmap_of_accepted_models_plot_2D
-dev.off()
+
+## output_folder <- "/media/storage/stef_sim/inference_estimation/plots"
+
+# * Legacy (non-automated code)
+
+## # ** Scale 1
+
+## # *** 2 Best Pops
+
+## ## % of simulation that "population" was among the 2 best.
+
+## best_2_pops_barplot_name <- paste0(c( output_folder, "/best_2_pops.pdf" ), collapse = '')
+
+## best_2_populations <- melt(do.call(rbind, lapply(1:rep, function(x) {
+##         as.character(list_of_all_summaries$best_pops[[x]][1:2, 1])
+## })))
+
+## best_2_for_barplot <- data.frame(
+##         onomata = factor(names(table(factor(best_2_populations[, 3], levels = all_ancestors))), levels = all_ancestors),
+##         values = as.vector(table(best_2_populations[, 3]))
+## )
+
+## barplot_of_best_2_pops <- ggplot(best_2_for_barplot, aes(x = onomata, y = as.numeric(values)))
+## barplot_of_best_2_pops <- barplot_of_best_2_pops + geom_bar(stat = "identity", fill = "steelblue")
+## barplot_of_best_2_pops <- barplot_of_best_2_pops + geom_text(
+##   aes(label = values),
+##   vjust = -0.3, size = 4
+## )
+## barplot_of_best_2_pops <- barplot_of_best_2_pops + theme(
+##         axis.title = element_blank()
+## )
+## barplot_of_best_2_pops <- barplot_of_best_2_pops + labs(
+##         title = "Scale 0.5"
+## )
+
+
+## CairoPDF( best_2_pops_barplot_name )
+## barplot_of_best_2_pops
+## dev.off()
+
+## # *** 2 Best Pops 2D
+
+## ## % of simulation that "population pair" was among the best pair.
+
+## heatmap_of_best_two_pops_2d_plot_name <- paste0(c( output_folder, "/best_2_pops_2d.pdf" ), collapse = '')
+
+## best_two_pops_2d <- as.data.frame(do.call(rbind, lapply(1:rep, function(x) {
+##   sort(as.character(list_of_all_summaries$best_pops[[x]][1:2, 1]))
+## })))
+## names(best_two_pops_2d) <- c("best_1", "best_2")
+
+## best_two_pops_2d$best_1 <- factor(best_two_pops_2d$best_1, levels = all_ancestors)
+## best_two_pops_2d$best_2 <- factor(best_two_pops_2d$best_2, levels = all_ancestors)
+
+## melted_best_two_pops_2d <- melt(table(best_two_pops_2d) / 100)
+## triangle <- as.character(melted_best_two_pops_2d$best_1) < as.character(melted_best_two_pops_2d$best_2)
+
+## heatmap_of_best_two_pops_2d <- ggplot(melted_best_two_pops_2d[triangle, ], aes(x = best_1, y = best_2, fill = value))
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + geom_tile(
+##         color = "white",
+##         lwd = 0.4,
+##         linetype = 1
+## )
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + geom_text(
+##   aes(label = value),
+##   color = "white",
+##   size = 3
+## )
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + labs(title = "Scale 0.5")
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + theme(
+##   axis.title.x = element_blank(),
+##   axis.title.y = element_blank()
+## )
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
+
+## CairoPDF( heatmap_of_best_two_pops_2d_plot_name )
+## heatmap_of_best_two_pops_2d
+## dev.off()
+
+## # *** Acceplted Models
+
+## ## Number of models of "population" that are accepted divided by
+## ## all the possible models that the population can take part in.
+
+## average_accepted_models_plot_name <- paste0(
+##   c(output_folder, "/average_accepted_models.pdf"),
+##         collapse = ""
+## )
+
+## average_accepted_models <- colMeans( do.call(rbind, list_of_all_summaries$accepted_models) )
+## average_accepted_models_for_barplot <- data.frame(
+##         onomata = factor(names(average_accepted_models), levels = all_ancestors),
+##         values = as.numeric(sprintf("%.4f", average_accepted_models))
+## )
+
+## barplot_of_accepted_models <- ggplot(average_accepted_models_for_barplot, aes(x = onomata, y = as.numeric(values)))
+## barplot_of_accepted_models <- barplot_of_accepted_models + geom_bar(stat = "identity", fill = "steelblue")
+## barplot_of_accepted_models <- barplot_of_accepted_models + geom_text(
+##   aes(label = values),
+##   vjust = -0.3, size = 4
+## )
+## barplot_of_accepted_models <- barplot_of_accepted_models + labs(
+##         title = "Scale 0.5"
+## )
+## barplot_of_accepted_models <- barplot_of_accepted_models + theme(
+##         axis.title = element_blank()
+## )
+
+## CairoPDF( average_accepted_models_plot_name )
+## barplot_of_accepted_models
+## dev.off()
+
+## # *** Accepted Models 2D
+
+## ## Number of models of "population pair" that are accepted divided by
+## ## all the possible models that the population pair can take part in.
+
+## heatmap_of_accepted_models_2D_plot_name <- paste0(
+##         c(output_folder, "/accepted_models_2d.pdf"),
+##         collapse = ""
+## )
+
+## melted_accepted_models_2d <- melt(Reduce("+", list_of_all_summaries$accepted_models_2d) / 100, na.rm = TRUE)
+## melted_accepted_models_2d <- melted_accepted_models_2d[!is.nan(melted_accepted_models_2d$value), ]
+## melted_accepted_models_2d$value  <- as.numeric(sprintf("%.4f", melted_accepted_models_2d$value))
+
+## heatmap_of_accepted_models_plot_2D <- ggplot(melted_accepted_models_2d, aes( x = left_1, y = left_2, fill = value))
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + geom_tile(
+##         color = "white",
+##         lwd = 0.4,
+##         linetype = 1
+## )
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + geom_text(
+##   aes(label = value),
+##   color = "white",
+##   size = 3
+## )
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + labs(title = "Scale 0.5")
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + theme(
+##   axis.title.x = element_blank(),
+##   axis.title.y = element_blank()
+## )
+## ## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + theme_minimal()
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
+
+## CairoPDF( heatmap_of_accepted_models_2D_plot_name )
+## heatmap_of_accepted_models_plot_2D
+## dev.off()
+
+## # ** Scale 2
+
+## # *** 2 Best Pops
+
+## best_2_pops_barplot_name <- paste0(c( output_folder, "/best_2_pops_scale_2.pdf" ), collapse = '')
+
+## best_2_populations <- melt(do.call(rbind, lapply(1:rep, function(x) {
+##         as.character(list_of_all_summaries$best_pops[[x]][1:2, 1])
+## })))
+
+## best_2_for_barplot <- data.frame(
+##   onomata = factor(names(table(factor(best_2_populations[, 3], levels = all_ancestors))), levels = all_ancestors),
+##         values = as.vector(table(factor(best_2_populations[, 3], levels = all_ancestors)))
+## )
+
+## barplot_of_best_2_pops <- ggplot(best_2_for_barplot, aes(x = onomata, y = as.numeric(values)))
+## barplot_of_best_2_pops <- barplot_of_best_2_pops + geom_bar(stat = "identity", fill = "steelblue")
+## barplot_of_best_2_pops <- barplot_of_best_2_pops + geom_text(
+##   aes(label = values),
+##   vjust = -0.3, size = 4
+## )
+## barplot_of_best_2_pops <- barplot_of_best_2_pops + theme(
+##         axis.title = element_blank()
+## )
+## barplot_of_best_2_pops <- barplot_of_best_2_pops + labs(
+##         title = "Scale 1"
+## )
+
+
+## CairoPDF( best_2_pops_barplot_name )
+## barplot_of_best_2_pops
+## dev.off()
+
+## # *** 2 Best Pops 2D
+
+## heatmap_of_best_two_pops_2d_plot_name <- paste0(c( output_folder, "/best_2_pops_2d_scale_2.pdf" ), collapse = '')
+
+## best_two_pops_2d <- as.data.frame(do.call(rbind, lapply(1:rep, function(x) {
+##   sort(as.character(list_of_all_summaries$best_pops[[x]][1:2, 1]))
+## })))
+## names(best_two_pops_2d) <- c("best_1", "best_2")
+
+## best_two_pops_2d$best_1 <- factor(best_two_pops_2d$best_1, levels = all_ancestors)
+## best_two_pops_2d$best_2 <- factor(best_two_pops_2d$best_2, levels = all_ancestors)
+
+## melted_best_two_pops_2d <- melt(table(best_two_pops_2d) / 100)
+## triangle <- as.character(melted_best_two_pops_2d$best_1) < as.character(melted_best_two_pops_2d$best_2)
+
+## heatmap_of_best_two_pops_2d <- ggplot(melted_best_two_pops_2d[triangle, ], aes(x = best_1, y = best_2, fill = value))
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + geom_tile(
+##         color = "white",
+##         lwd = 0.4,
+##         linetype = 1
+## )
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + geom_text(
+##   aes(label = value),
+##   color = "white",
+##   size = 3
+## )
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + labs(title = "Scale 1")
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + theme(
+##   axis.title.x = element_blank(),
+##   axis.title.y = element_blank()
+## )
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
+
+## CairoPDF( heatmap_of_best_two_pops_2d_plot_name )
+## heatmap_of_best_two_pops_2d
+## dev.off()
+
+## # *** Acceplted Models
+
+## average_accepted_models_plot_name <- paste0(
+##   c(output_folder, "/average_accepted_models_scale_2.pdf"),
+##         collapse = ""
+## )
+
+## average_accepted_models <- colMeans( do.call(rbind, list_of_all_summaries$accepted_models) )
+## average_accepted_models_for_barplot <- data.frame(
+##         onomata = factor(names(average_accepted_models), levels = all_ancestors),
+##         values = as.numeric(sprintf("%.4f", average_accepted_models))
+## )
+
+## barplot_of_accepted_models <- ggplot(average_accepted_models_for_barplot, aes(x = onomata, y = as.numeric(values)))
+## barplot_of_accepted_models <- barplot_of_accepted_models + geom_bar(stat = "identity", fill = "steelblue")
+## barplot_of_accepted_models <- barplot_of_accepted_models + geom_text(
+##   aes(label = values),
+##   vjust = -0.3, size = 4
+## )
+## barplot_of_accepted_models <- barplot_of_accepted_models + labs(
+##         title = "Scale 1"
+## )
+## barplot_of_accepted_models <- barplot_of_accepted_models + theme(
+##         axis.title = element_blank()
+## )
+
+## CairoPDF( average_accepted_models_plot_name )
+## barplot_of_accepted_models
+## dev.off()
+
+## # *** Accepted Models 2D
+
+## heatmap_of_accepted_models_2D_plot_name <- paste0(
+##         c(output_folder, "/accepted_models_2d_scale_2.pdf"),
+##         collapse = ""
+## )
+
+## melted_accepted_models_2d <- melt(Reduce("+", list_of_all_summaries$accepted_models_2d) / 100, na.rm = TRUE)
+## melted_accepted_models_2d <- melted_accepted_models_2d[!is.nan(melted_accepted_models_2d$value), ]
+## melted_accepted_models_2d$value  <- as.numeric(sprintf("%.4f", melted_accepted_models_2d$value))
+
+## heatmap_of_accepted_models_plot_2D <- ggplot(melted_accepted_models_2d, aes( x = left_1, y = left_2, fill = value))
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + geom_tile(
+##         color = "white",
+##         lwd = 0.4,
+##         linetype = 1
+## )
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + geom_text(
+##   aes(label = value),
+##   color = "white",
+##   size = 3
+## )
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + labs(title = "Scale 1")
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + theme(
+##   axis.title.x = element_blank(),
+##   axis.title.y = element_blank()
+## )
+## ## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + theme_minimal()
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
+
+## CairoPDF( heatmap_of_accepted_models_2D_plot_name )
+## heatmap_of_accepted_models_plot_2D
+## dev.off()
+
+## # ** Scale 5
+
+## # *** 2 Best Pops
+
+## best_2_pops_barplot_name <- paste0(c( output_folder, "/best_2_pops_scale_5.pdf" ), collapse = '')
+
+## best_2_populations <- melt(do.call(rbind, lapply(1:rep, function(x) {
+##         as.character(list_of_all_summaries$best_pops[[x]][1:2, 1])
+## })))
+
+## best_2_for_barplot <- data.frame(
+##   onomata = factor(names(table(factor(best_2_populations[, 3], levels = all_ancestors))), levels = all_ancestors),
+##         values = as.vector(table(best_2_populations[, 3]))
+## )
+
+## barplot_of_best_2_pops <- ggplot(best_2_for_barplot, aes(x = onomata, y = as.numeric(values)))
+## barplot_of_best_2_pops <- barplot_of_best_2_pops + geom_bar(stat = "identity", fill = "steelblue")
+## barplot_of_best_2_pops <- barplot_of_best_2_pops + geom_text(
+##   aes(label = values),
+##   vjust = -0.3, size = 4
+## )
+## barplot_of_best_2_pops <- barplot_of_best_2_pops + theme(
+##         axis.title = element_blank()
+## )
+## barplot_of_best_2_pops <- barplot_of_best_2_pops + labs(
+##         title = "Scale 2.5"
+## )
+
+
+## CairoPDF( best_2_pops_barplot_name )
+## barplot_of_best_2_pops
+## dev.off()
+
+## # *** 2 Best Pops 2D
+
+
+## heatmap_of_best_two_pops_2d_plot_name <- paste0(c( output_folder, "/best_2_pops_2d_scale_5.pdf" ), collapse = '')
+
+## best_two_pops_2d <- as.data.frame(do.call(rbind, lapply(1:rep, function(x) {
+##   sort(as.character(list_of_all_summaries$best_pops[[x]][1:2, 1]))
+## })))
+## names(best_two_pops_2d) <- c("best_1", "best_2")
+
+## best_two_pops_2d$best_1 <- factor(best_two_pops_2d$best_1, levels = all_ancestors)
+## best_two_pops_2d$best_2 <- factor(best_two_pops_2d$best_2, levels = all_ancestors)
+
+## melted_best_two_pops_2d <- melt(table(best_two_pops_2d) / 100)
+## triangle <- as.character(melted_best_two_pops_2d$best_1) < as.character(melted_best_two_pops_2d$best_2)
+
+## heatmap_of_best_two_pops_2d <- ggplot(melted_best_two_pops_2d[triangle, ], aes(x = best_1, y = best_2, fill = value))
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + geom_tile(
+##         color = "white",
+##         lwd = 0.4,
+##         linetype = 1
+## )
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + geom_text(
+##   aes(label = value),
+##   color = "white",
+##   size = 3
+## )
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + labs(title = "Scale 2.5")
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + theme(
+##   axis.title.x = element_blank(),
+##   axis.title.y = element_blank()
+## )
+## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
+
+## CairoPDF( heatmap_of_best_two_pops_2d_plot_name )
+## heatmap_of_best_two_pops_2d
+## dev.off()
+
+## # *** Acceplted Models
+
+## average_accepted_models_plot_name <- paste0(
+##   c(output_folder, "/average_accepted_models_scale_5.pdf"),
+##         collapse = ""
+## )
+
+## average_accepted_models <- colMeans( do.call(rbind, list_of_all_summaries$accepted_models) )
+## average_accepted_models_for_barplot <- data.frame(
+##         onomata = factor(names(average_accepted_models), levels = all_ancestors),
+##         values = as.numeric(sprintf("%.4f", average_accepted_models))
+## )
+
+## barplot_of_accepted_models <- ggplot(average_accepted_models_for_barplot, aes(x = onomata, y = as.numeric(values)))
+## barplot_of_accepted_models <- barplot_of_accepted_models + geom_bar(stat = "identity", fill = "steelblue")
+## barplot_of_accepted_models <- barplot_of_accepted_models + geom_text(
+##   aes(label = values),
+##   vjust = -0.3, size = 4
+## )
+## barplot_of_accepted_models <- barplot_of_accepted_models + labs(
+##         title = "Scale 2.5"
+## )
+## barplot_of_accepted_models <- barplot_of_accepted_models + theme(
+##         axis.title = element_blank()
+## )
+
+## CairoPDF( average_accepted_models_plot_name )
+## barplot_of_accepted_models
+## dev.off()
+
+## # *** Accepted Models 2D
+
+## heatmap_of_accepted_models_2D_plot_name <- paste0(
+##         c(output_folder, "/accepted_models_2d_scale_5.pdf"),
+##         collapse = ""
+## )
+
+## melted_accepted_models_2d <- melt(Reduce("+", list_of_all_summaries$accepted_models_2d) / 100, na.rm = TRUE)
+## melted_accepted_models_2d <- melted_accepted_models_2d[!is.nan(melted_accepted_models_2d$value), ]
+## melted_accepted_models_2d$value  <- as.numeric(sprintf("%.4f", melted_accepted_models_2d$value))
+
+## heatmap_of_accepted_models_plot_2D <- ggplot(melted_accepted_models_2d, aes( x = left_1, y = left_2, fill = value))
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + geom_tile(
+##         color = "white",
+##         lwd = 0.4,
+##         linetype = 1
+## )
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + geom_text(
+##   aes(label = value),
+##   color = "white",
+##   size = 3
+## )
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + labs(title = "Scale 2.5")
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + theme(
+##   axis.title.x = element_blank(),
+##   axis.title.y = element_blank()
+## )
+## ## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + theme_minimal()
+## heatmap_of_accepted_models_plot_2D <- heatmap_of_accepted_models_plot_2D + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
+
+## CairoPDF( heatmap_of_accepted_models_2D_plot_name )
+## heatmap_of_accepted_models_plot_2D
+## dev.off()
