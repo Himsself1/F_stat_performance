@@ -30,7 +30,7 @@ plot_best_2_pops <- function( population_rankings, all_ancestors, titlos = "" ){
   
   best_2_for_barplot <- data.frame(
     onomata = factor(names(table(factor(best_2_populations[, 3], levels = all_ancestors))), levels = all_ancestors),
-    values = as.vector(table(best_2_populations[, 3]))
+    values = as.vector(table(factor(best_2_populations[, 3], levels = all_ancestors)))
   )
   
   barplot_of_best_2_pops <- ggplot(best_2_for_barplot, aes(x = onomata, y = as.numeric(values)))
@@ -93,7 +93,6 @@ plot_best_pop_pair <- function( population_rankings, all_ancestors, titlos = "" 
   
 }
 
-
 # * Accepted Models
 
 ## Number of models of "population" that are accepted divided by
@@ -148,15 +147,18 @@ plot_accepted_models_2d <- function( list_of_accepted_models_2d, all_ancestors, 
     size = 3
   )
   heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + labs(title = titlos)
-  heatmapap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + theme(
-    axis.title.x = element_blank(),
-    axis.title.y = element_blank()
-  )
+  ## heatmapap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + theme(
+  ##   axis.title.x = element_blank(),
+  ##   axis.title.y = element_blank()
+  ## )
+  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + theme(
+      axis.title = element_blank()
+    )
   ## heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + theme_minimal()
   heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
   heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_y_discrete( drop = FALSE )
   heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_x_discrete( drop = FALSE )
 
-  return( heatmap_of_accepted_models_2d )
+  return( heatmap_of_accepted_models_plot_2d )
   
 }

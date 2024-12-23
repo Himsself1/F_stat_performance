@@ -13,8 +13,6 @@ for (i in list_of_packages) {
   }
 }
 
-source( "./qpadm_inference/best_populations_plot_funtions.R" )
-
 devtools::install_github("uqrmaie1/admixtools")
 library(admixtools)
 
@@ -23,12 +21,11 @@ library(admixtools)
 args<-commandArgs(TRUE)
 input_folder <- args[1]
 output_folder <- args[2]
-
-input_files <- list.files(path = input_folder, pattern = ".geno", full.names = TRUE)
-snp_files <- list.files(path = input_folder, pattern = ".snp", full.names = TRUE)
+plot_functions <- args[3]
 
 ## Debugging purposes ##
 ## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size/eig"
+## output_folder <- "/media/storage/stef_sim/inference_estimation/statistics/no_migration_constant_size"
 ## input_folder_scale_2 <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size_scale_2/eig"
 ## input_folder_scale_5 <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size_scale_5/eig"
 
@@ -37,7 +34,16 @@ snp_files <- list.files(path = input_folder, pattern = ".snp", full.names = TRUE
 
 ## input_files <- list.files(path = input_folder_scale_5, pattern = ".geno", full.names = TRUE)
 ## snp_files <- list.files(path = input_folder_scale_5, pattern = ".snp", full.names = TRUE)
+## plot_functions <- "/home/stefanos/F_stat_performance/qpadm_inference/best_populations_plot_funtions.R"
+
 ########################
+
+## Functions for plotting are located in another file
+source( plot_functions )
+
+input_files <- list.files(path = input_folder, pattern = ".geno", full.names = TRUE)
+snp_files <- list.files(path = input_folder, pattern = ".snp", full.names = TRUE)
+
 
 ## parent_folder <- dirname(input_folder)
 
@@ -53,11 +59,11 @@ snp_files <- list.files(path = input_folder, pattern = ".snp", full.names = TRUE
 
 input_prefixes <- gsub(pattern = ".geno", replacement = "", input_files)
 parent_dir <- dirname(input_folder)
-metadata_file <- list.files(path = parent_dir, pattern = ".tsv", full_names = TRUE)
+metadata_file <- list.files(path = parent_dir, pattern = ".tsv", full.names = TRUE)
 
 base_dir <- basename(parent_dir) ## Name of the parent folder of the simulation.
-output_folder_for_plots <- paste0(output_folder, "/plots/", base_dir, collapse = '')
-output_folder_for_stats <- paste0(output_folder, "/statistics/", base_dir, collapse = '')
+output_folder_for_plots <- paste0(output_folder, "/plots/", collapse = '')
+output_folder_for_stats <- paste0(output_folder, "/stats/", collapse = '')
 dir.create( output_folder_for_plots, recursive = TRUE )
 dir.create( output_folder_for_stats, recursive = TRUE )
 
@@ -98,7 +104,7 @@ all_ancestors <- paste("pop_", c(0:3,5:8), sep = '')
 ## Following lines take all unique pairs of relatives.
 ## E.G. combination (pop_0, pop_1) exists but not (pop_1, pop_0)
 all_models <- c()
-for( i in 1:(length(all_ancestors)-length(unique(outgroups))) ){
+for( i in 1:(length(all_ancestors)-1) ) {
   for( j in (i+1):length(all_ancestors) ){
     all_models <- rbind( all_models, c(all_ancestors[i], all_ancestors[j]) )
   }
@@ -149,152 +155,152 @@ list_of_all_summaries <- list(
 
 for (rep in 1:length(input_prefixes)) {
 # ** Run F2 and qpAdm
-
-        f2_blocks_for_single_model <- f2_from_geno(
-                pref = input_prefixes[rep],
-                pops = individuals_in_populations,
-                inds = individual_names,
-                adjust_pseudohaploid = TRUE,
-                blgsize = 0.05
-        )
-
-        ## qpadm_multi iterates over a tibble whose rows represent
-        ## right and left populations and target
-        all_qpadms <- qpadm_multi(
-                data = f2_blocks_for_single_model,
-                models = qp_models
-        )
-
+  
+  f2_blocks_for_single_model <- f2_from_geno(
+    pref = input_prefixes[rep],
+    pops = individuals_in_populations,
+    inds = individual_names,
+    adjust_pseudohaploid = TRUE,
+    blgsize = 0.05
+  )
+  
+  ## qpadm_multi iterates over a tibble whose rows represent
+  ## right and left populations and target
+  all_qpadms <- qpadm_multi(
+    data = f2_blocks_for_single_model,
+    models = qp_models
+  )
+  
 # ** Summarize the data
 
-        feasibility <- c()
-        weights <- list()
-        p_values <- c()
-        for (i in 1:length(all_qpadms)) {
-                feasibility <- c(feasibility, all_qpadms[[i]]$popdrop$feasible[1])
-                weights[[i]] <- unname(all_qpadms[[i]]$popdrop[1, c(7, 8)])
-                p_values <- c(p_values, all_qpadms[[i]]$popdrop[1, 5])
-        }
-
+  feasibility <- c()
+  weights <- list()
+  p_values <- c()
+  for (i in 1:length(all_qpadms)) {
+    feasibility <- c(feasibility, all_qpadms[[i]]$popdrop$feasible[1])
+    weights[[i]] <- unname(all_qpadms[[i]]$popdrop[1, c(7, 8)])
+    p_values <- c(p_values, all_qpadms[[i]]$popdrop[1, 5])
+  }
+  
   ## `data_v1` will be the data frame with all the information tidied up
   ## In the final data frame, `p_value_all` and `feasible_all` show the p_value and
   ## feasibility of the model that doesn't exclude the respective population.
-        data_v1 <- data.frame(
-                left_1 = factor(do.call(rbind, left_all)[, 1], levels = all_ancestors),
-                left_2 = factor(do.call(rbind, left_all)[, 2], levels = all_ancestors),
-                weights_1 = as.data.frame(do.call(rbind, weights))[, 1],
-                weights_2 = as.data.frame(do.call(rbind, weights))[, 2],
-                exclude = exclude,
-                p_values = unname(unlist(p_values)),
-                p_values_all = unname(unlist(p_values[rep(which(exclude == "all"), each = length(all_ancestors) - 1)])),
-                feasible = feasibility,
-                feasible_all = feasibility[rep(which(exclude == "all"), each = length(all_ancestors) - 1)],
-                replicate = rep( rep, length(exclude) )
-        )
-
+  data_v1 <- data.frame(
+    left_1 = factor(do.call(rbind, left_all)[, 1], levels = all_ancestors),
+    left_2 = factor(do.call(rbind, left_all)[, 2], levels = all_ancestors),
+    weights_1 = as.data.frame(do.call(rbind, weights))[, 1],
+    weights_2 = as.data.frame(do.call(rbind, weights))[, 2],
+    exclude = exclude,
+    p_values = unname(unlist(p_values)),
+    p_values_all = unname(unlist(p_values[rep(which(exclude == "all"), each = length(all_ancestors) - 1)])),
+    feasible = feasibility,
+    feasible_all = feasibility[rep(which(exclude == "all"), each = length(all_ancestors) - 1)],
+    replicate = rep( rep, length(exclude) )
+  )
+  
 # ** Calculate "good" models per source. 
-        ## "good" are the models whose p_value is > 0.05 AND are "feasible"
-        ## Sometimes qpAdm outputs weights not in [0,1]. These are not "feasible" models
-
-        factor_models <- data_v1[, 1:2]
-        good_models <- data_v1[(data_v1$feasible == TRUE) & (data_v1$p_values > 0.05), ]
-        good_pops <- factor(c(good_models$left_1, good_models$left_2), levels = all_ancestors)
-        good_pops_2D <- data_frame(
-                left_1 = factor(good_models$left_1, levels = all_ancestors),
-                left_2 = factor(good_models$left_2, levels = all_ancestors)
-        )
-
-        percent_of_accepted_models <- table(good_pops) / choose(length(unique(exclude)), 2)
-        percent_of_accepted_models_2d <- table(good_pops_2D) / table(factor_models)
-
-        list_of_all_summaries$accepted_models[[rep]] <- percent_of_accepted_models
-        list_of_all_summaries$accepted_models_2d[[rep]] <- percent_of_accepted_models_2d
-
-        # ** Scoring loop
-
-        data_for_scoring_function <- as.data.frame(
-                data_v1[exclude != "all", c(1, 2, 5, 6, 7, 8, 9)],
-                row.names = 1:sum(exclude != "all")
-        )
-
-        ## scores <- c()
-        ## for( i in 1:nrow(data_for_scoring_function) ){
-        ##   if( data_for_scoring_function[i,]$p_values_all >= 0.05 ){
-        ##     if( data_for_scoring_function[i,]$p_values >= 0.05 ){
-        ##       ## Inference keeps being good regardless of inclusion.
-        ##       scores <- c(scores, 1)
-        ##       next
-        ##     } else {
-        ##       ## Inference is good when population was included but bad when it was excluded.
-        ##       scores <- c(scores, -1)
-        ##       next
-        ##     }
-        ##   } else {
-        ##     if( data_for_scoring_function[i,]$p_values >= 0.05 ){
-        ##       ## Inference was bad when population was included but good when it was excluded.
-        ##       ## This was not included in the original Supplementary.
-        ##       scores <- c(scores, -1)
-        ##       next
-        ##     } else {
-        ##       ## If inference is bad regardless of inclusion
-        ##       scores <- c(scores, 0)
-        ##       next
-        ##     }
-        ##   }
-        ## }
-        ## data_for_scoring_function$scores <- scores
+  ## "good" are the models whose p_value is > 0.05 AND are "feasible"
+  ## Sometimes qpAdm outputs weights not in [0,1]. These are not "feasible" models
+  
+  factor_models <- data_v1[, 1:2]
+  good_models <- data_v1[(data_v1$feasible == TRUE) & (data_v1$p_values > 0.05), ]
+  good_pops <- factor(c(good_models$left_1, good_models$left_2), levels = all_ancestors)
+  good_pops_2D <- data_frame(
+    left_1 = factor(good_models$left_1, levels = all_ancestors),
+    left_2 = factor(good_models$left_2, levels = all_ancestors)
+  )
+  
+  percent_of_accepted_models <- table(good_pops) / choose(length(unique(exclude)), 2)
+  percent_of_accepted_models_2d <- table(good_pops_2D) / table(factor_models)
+  
+  list_of_all_summaries$accepted_models[[rep]] <- percent_of_accepted_models
+  list_of_all_summaries$accepted_models_2d[[rep]] <- percent_of_accepted_models_2d
+  
+# ** Scoring loop
+  
+  data_for_scoring_function <- as.data.frame(
+    data_v1[exclude != "all", c(1, 2, 5, 6, 7, 8, 9)],
+    row.names = 1:sum(exclude != "all")
+  )
+  
+  ## scores <- c()
+  ## for( i in 1:nrow(data_for_scoring_function) ){
+  ##   if( data_for_scoring_function[i,]$p_values_all >= 0.05 ){
+  ##     if( data_for_scoring_function[i,]$p_values >= 0.05 ){
+  ##       ## Inference keeps being good regardless of inclusion.
+  ##       scores <- c(scores, 1)
+  ##       next
+  ##     } else {
+  ##       ## Inference is good when population was included but bad when it was excluded.
+  ##       scores <- c(scores, -1)
+  ##       next
+  ##     }
+  ##   } else {
+  ##     if( data_for_scoring_function[i,]$p_values >= 0.05 ){
+  ##       ## Inference was bad when population was included but good when it was excluded.
+  ##       ## This was not included in the original Supplementary.
+  ##       scores <- c(scores, -1)
+  ##       next
+  ##     } else {
+  ##       ## If inference is bad regardless of inclusion
+  ##       scores <- c(scores, 0)
+  ##       next
+  ##     }
+  ##   }
+  ## }
+  ## data_for_scoring_function$scores <- scores
 
 # **  Calculate pairwise "resillience" (as described by Lazaridis 2024).
   ## Returns 1 if resillient, -1 if not resillient and 0 if a decision cannot be made.
-        score_stef <- c()
-        for (i in 1:nrow(data_for_scoring_function)) {
-                if ((data_for_scoring_function$p_values[i] < 0.05) & (data_for_scoring_function$p_values_all[i] < 0.05)) {
-                        ## Both models are bad
-                        score_stef <- c(score_stef, 0)
-                        next
-                } else if ((data_for_scoring_function$p_values[i] < 0.05) & (data_for_scoring_function$p_values_all[i] > 0.05)) {
-                        ## Include is better, so I need to check if it is also feasible.
-                        if (data_for_scoring_function$feasible_all[i] == TRUE) {
-                                score_stef <- c(score_stef, 0)
-                                next
-                        } else {
-                                score_stef <- c(score_stef, 0)
-                                next
-                        }
-                } else if ((data_for_scoring_function$p_values[i] > 0.05) & (data_for_scoring_function$p_values_all[i] < 0.05)) {
-                        ## Exclude is better, so I need to check if it is also feasible.
-                        if (data_for_scoring_function$feasible[i] == TRUE) {
-                                score_stef <- c(score_stef, -1)
-                                next
-                        } else {
-                                score_stef <- c(score_stef, 0)
-                                next
-                        }
-                } else {
-                        ## Both P_include and P_exclude are > 0.05. Need to check if they are also feasible.
-                        if ((data_for_scoring_function$feasible[i] == FALSE) & (data_for_scoring_function$feasible_all[i] == FALSE)) {
-                                ## Both are not feasible => tie.
-                                score_stef <- c(score_stef, 0)
-                                next
-                        } else if ((data_for_scoring_function$feasible[i] == FALSE) & (data_for_scoring_function$feasible_all[i] == TRUE)) {
-                                score_stef <- c(score_stef, 0) # Need to discuss this. Include > Exclude
-                                next
-                        } else if ((data_for_scoring_function$feasible[i] == TRUE) & (data_for_scoring_function$feasible_all[i] == FALSE)) {
-                                score_stef <- c(score_stef, -1) # Exclude > Include
-                                next
-                        } else {
-                                ## Both P-values are > 0.05 and both are feasible => Inference is good
-                                score_stef <- c(score_stef, 1)
-                                next
-                        }
-                }
-        }
-        data_for_scoring_function$score_stef <- score_stef
-
-        data_for_single_sim_heatmap <- data_for_scoring_function[, c(1:3, 8)]
-        data_heatmap_2 <- data_for_scoring_function[, c(2, 1, 3, 8)]
-        names(data_heatmap_2) <- names(data_for_single_sim_heatmap)
-        data_versus <- rbind(data_for_single_sim_heatmap, data_heatmap_2)
+  score_stef <- c()
+  for (i in 1:nrow(data_for_scoring_function)) {
+    if ((data_for_scoring_function$p_values[i] < 0.05) & (data_for_scoring_function$p_values_all[i] < 0.05)) {
+      ## Both models are bad
+      score_stef <- c(score_stef, 0)
+      next
+    } else if ((data_for_scoring_function$p_values[i] < 0.05) & (data_for_scoring_function$p_values_all[i] > 0.05)) {
+      ## Include is better, so I need to check if it is also feasible.
+      if (data_for_scoring_function$feasible_all[i] == TRUE) {
+        score_stef <- c(score_stef, 0)
+        next
+      } else {
+        score_stef <- c(score_stef, 0)
+        next
+      }
+    } else if ((data_for_scoring_function$p_values[i] > 0.05) & (data_for_scoring_function$p_values_all[i] < 0.05)) {
+      ## Exclude is better, so I need to check if it is also feasible.
+      if (data_for_scoring_function$feasible[i] == TRUE) {
+        score_stef <- c(score_stef, -1)
+        next
+      } else {
+        score_stef <- c(score_stef, 0)
+        next
+      }
+    } else {
+      ## Both P_include and P_exclude are > 0.05. Need to check if they are also feasible.
+      if ((data_for_scoring_function$feasible[i] == FALSE) & (data_for_scoring_function$feasible_all[i] == FALSE)) {
+        ## Both are not feasible => tie.
+        score_stef <- c(score_stef, 0)
+        next
+      } else if ((data_for_scoring_function$feasible[i] == FALSE) & (data_for_scoring_function$feasible_all[i] == TRUE)) {
+        score_stef <- c(score_stef, 0) # Need to discuss this. Include > Exclude
+        next
+      } else if ((data_for_scoring_function$feasible[i] == TRUE) & (data_for_scoring_function$feasible_all[i] == FALSE)) {
+        score_stef <- c(score_stef, -1) # Exclude > Include
+        next
+      } else {
+        ## Both P-values are > 0.05 and both are feasible => Inference is good
+        score_stef <- c(score_stef, 1)
+        next
+      }
+    }
+  }
+  data_for_scoring_function$score_stef <- score_stef
+  
+  data_for_single_sim_heatmap <- data_for_scoring_function[, c(1:3, 8)]
+  data_heatmap_2 <- data_for_scoring_function[, c(2, 1, 3, 8)]
+  names(data_heatmap_2) <- names(data_for_single_sim_heatmap)
+  data_versus <- rbind(data_for_single_sim_heatmap, data_heatmap_2)
 
 # ** Calculating Lazaridis score
 
@@ -302,64 +308,64 @@ for (rep in 1:length(input_prefixes)) {
   ## If A is resillient to B and B is resillient to A then A vs B = 0
   ## If A is not resillient to B and B is resillient to A then A vs B = -1
   ## The sign of the score denotes which population is favored in the comparison.
-        results_versus <- data_frame()
-        for (l1 in 1:(length(all_ancestors) - 1)) {
-                for (ex in (l1 + 1):(length(all_ancestors))) {
-                        if (l1 == ex) {
-                                next
-                        }
-                        for (l2 in 1:length(all_ancestors)) {
-                                if (l2 %in% c(l1, ex)) {
-                                        next
-                                } else {
-                                        index_model_A <- which(
-                                                (data_versus$left_1 == all_ancestors[l1]) &
-                                                        (data_versus$exclude == all_ancestors[ex]) &
-                                                        (data_versus$left_2 == all_ancestors[l2])
-                                        )
-                                        index_model_B <- which(
-                                                (data_versus$left_1 == all_ancestors[ex]) &
-                                                        (data_versus$exclude == all_ancestors[l1]) &
-                                                        (data_versus$left_2 %in% all_ancestors[l2])
-                                        )
-                                        if (data_versus$score_stef[index_model_A] > data_versus$score_stef[index_model_B]) {
-                                                temp_result_versus <- c(all_ancestors[l1], all_ancestors[ex], 1)
-                                        } else if (data_versus$score_stef[index_model_A] < data_versus$score_stef[index_model_B]) {
-                                                temp_result_versus <- c(all_ancestors[l1], all_ancestors[ex], -1)
-                                        } else {
-                                                temp_result_versus <- c(all_ancestors[l1], all_ancestors[ex], 0)
-                                        }
-                                }
-                                results_versus <- rbind(results_versus, temp_result_versus)
-                        }
-                }
+  results_versus <- data_frame()
+  for (l1 in 1:(length(all_ancestors) - 1)) {
+    for (ex in (l1 + 1):(length(all_ancestors))) {
+      if (l1 == ex) {
+        next
+      }
+      for (l2 in 1:length(all_ancestors)) {
+        if (l2 %in% c(l1, ex)) {
+          next
+        } else {
+          index_model_A <- which(
+          (data_versus$left_1 == all_ancestors[l1]) &
+            (data_versus$exclude == all_ancestors[ex]) &
+            (data_versus$left_2 == all_ancestors[l2])
+          )
+          index_model_B <- which(
+          (data_versus$left_1 == all_ancestors[ex]) &
+            (data_versus$exclude == all_ancestors[l1]) &
+            (data_versus$left_2 == all_ancestors[l2])
+          )
+          if (data_versus$score_stef[index_model_A] > data_versus$score_stef[index_model_B]) {
+            temp_result_versus <- c(all_ancestors[l1], all_ancestors[ex], 1)
+          } else if (data_versus$score_stef[index_model_A] < data_versus$score_stef[index_model_B]) {
+            temp_result_versus <- c(all_ancestors[l1], all_ancestors[ex], -1)
+          } else {
+            temp_result_versus <- c(all_ancestors[l1], all_ancestors[ex], 0)
+          }
         }
-        names(results_versus) <- c("left", "exclude", "direction")
+        results_versus <- rbind(results_versus, temp_result_versus)
+      }
+    }
+  }
+  names(results_versus) <- c("left", "exclude", "direction")
 
-        results_versus$left <- factor(results_versus$left, levels = all_ancestors)
-        results_versus$exclude <- factor(results_versus$exclude, levels = all_ancestors)
-        results_versus$direction <- as.numeric(results_versus$direction)
+  results_versus$left <- factor(results_versus$left, levels = all_ancestors)
+  results_versus$exclude <- factor(results_versus$exclude, levels = all_ancestors)
+  results_versus$direction <- as.numeric(results_versus$direction)
   ## I have upper triangular population pairs (if I have A & B, I don't calculate B & A).
   ## In order to score each population seperately, I need to concatenate "left"+"exclude" and
   ## flip the sign of the "exclude" population.
-        results_versus_2nd_dim <- data_frame(
-                left = factor(c(results_versus[, 1], results_versus[, 2]), levels = all_ancestors),
-                score = c(results_versus[, 3], results_versus[, 3] * (-1))
-        )
+  results_versus_2nd_dim <- data_frame(
+    left = factor(c(results_versus[, 1], results_versus[, 2]), levels = all_ancestors),
+    score = c(results_versus[, 3], results_versus[, 3] * (-1))
+  )
 
-        ## This shows how many times a population is the winner
+  ## This shows how many times a population is the winner
 
-        best_pops <- as.data.frame(results_versus_2nd_dim %>%
-                group_by(left) %>%
-                summarise(score = sum(score)) %>%
-                arrange(desc(score)))
+  best_pops <- as.data.frame(results_versus_2nd_dim %>%
+                               group_by(left) %>%
+                               summarise(score = sum(score)) %>%
+                               arrange(desc(score)))
 
-        best_pops_2D <- as.data.frame(results_versus %>%
-                group_by(left, exclude) %>%
-                summarise(score = as.numeric(sum(direction))))
+  best_pops_2D <- as.data.frame(results_versus %>%
+                                  group_by(left, exclude) %>%
+                                  summarise(score = as.numeric(sum(direction))))
 
-        list_of_all_summaries$best_pops[[rep]] <- best_pops
-        list_of_all_summaries$best_pops_2D[[rep]] <- best_pops_2D
+  list_of_all_summaries$best_pops[[rep]] <- best_pops
+  list_of_all_summaries$best_pops_2D[[rep]] <- best_pops_2D
 }
 
 
@@ -419,14 +425,13 @@ dev.off()
 
 
 heatmap_of_best_pop_pair <- plot_best_pop_pair(
-  list_of_all_summaries$best_pops_2D,
+  list_of_all_summaries$best_pops,
   all_ancestors,
   ""
 )
 CairoPDF( best_population_pair_plot_name )
 heatmap_of_best_pop_pair
 dev.off()
-
 
 ## output_folder <- "/media/storage/stef_sim/inference_estimation/plots"
 
