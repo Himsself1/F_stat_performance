@@ -19,6 +19,8 @@ cli.add_argument( "-how_many", type = int, default = 1,
                   help = 'How many simulations are going to be run in one go.' )
 cli.add_argument( "-scale", type = float, default = 1,
                   help = 'Scale all branch length by `scale`. It cannot be <= 0.5' )
+cli.add_argument( "-rec", type = float, default = 1.25e-7,
+                  help = 'Recombination rate.' )
 
 argue = cli.parse_args()
 

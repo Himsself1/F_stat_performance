@@ -1,7 +1,7 @@
 #! /bin/bash
 
 MASTER_OUT_FOLDER="/home/stefanos/new_storage/inference_estimation/"
-MODEL_FOLDER="sequencies/no_migration_constant_size"
+MODEL_FOLDER="sequencies/no_migration_constant_size_rec_1e8"
 VCF_FOLDER=$MASTER_OUT_FOLDER$MODEL_FOLDER"/vcf/"
 EIGENSTRAT_FOLDER=$MASTER_OUT_FOLDER$MODEL_FOLDER"/eig/"
 STATISTICS_FOLDER=$MASTER_OUT_FOLDER"statistics"
@@ -19,7 +19,8 @@ python3 ../msprime_scripts/msprime_no_migration.py \
     -out_folder $VCF_FOLDER \
     -name no_migration_constant_size \
     -how_many 100 \
-    -scale 1
+    -scale 1 \
+    -rec 1.25e-8
 
 LIST_OF_FILES=$(find $VCF_FOLDER -type f -name "*.vcf" -exec readlink -f {} \;)
 
@@ -36,7 +37,7 @@ done
 LIST_OF_snps=$(find $EIGENSTRAT_FOLDER -type f -name "*.snp" -exec readlink -f {} \;)
 for file in ${LIST_OF_snps[@]}; do
     ## Multiply position with recombination rate
-    awk '{ $3 = $4*1.25e-7 } 1' $file > $file".tmp"
+    awk '{ $3 = $4*1.25e-8 } 1' $file > $file".tmp"
     # awk '{ $3 = (50/100)*log(1/(1-2*(1e-8)*$4)) } 1' $file > $file".tmp"
     mv $file".tmp" $file
 done
