@@ -190,7 +190,7 @@ sampling_scheme_out_1 = msprime.SampleSet( 10, population = "outpop_1", time = 0
 sampling_scheme_out_0 = msprime.SampleSet( 10, population = "outpop_0", time = 0 )
 
 # Merge all the lists of samples
-all_samples = [sampling_scheme_0, sampling_scheme_1, sampling_scheme_1, sampling_scheme_3, sampling_scheme_4, sampling_scheme_5, sampling_scheme_6, sampling_scheme_7, sampling_scheme_8, sampling_scheme_out_1, sampling_scheme_out_0]
+all_samples = [sampling_scheme_0, sampling_scheme_1, sampling_scheme_2, sampling_scheme_3, sampling_scheme_4, sampling_scheme_5, sampling_scheme_6, sampling_scheme_7, sampling_scheme_8, sampling_scheme_out_1, sampling_scheme_out_0]
 
 # ** Sorting events
 

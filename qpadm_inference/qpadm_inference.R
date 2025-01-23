@@ -29,11 +29,6 @@ plot_functions <- args[3]
 ## input_folder_scale_2 <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size_scale_2/eig"
 ## input_folder_scale_5 <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size_scale_5/eig"
 
-## input_files <- list.files(path = input_folder_scale_2, pattern = ".geno", full.names = TRUE)
-## snp_files <- list.files(path = input_folder_scale_2, pattern = ".snp", full.names = TRUE)
-
-## input_files <- list.files(path = input_folder_scale_5, pattern = ".geno", full.names = TRUE)
-## snp_files <- list.files(path = input_folder_scale_5, pattern = ".snp", full.names = TRUE)
 ## plot_functions <- "/home/stefanos/F_stat_performance/qpadm_inference/best_populations_plot_funtions.R"
 
 ########################
@@ -44,18 +39,7 @@ source( plot_functions )
 input_files <- list.files(path = input_folder, pattern = ".geno", full.names = TRUE)
 snp_files <- list.files(path = input_folder, pattern = ".snp", full.names = TRUE)
 
-
 ## parent_folder <- dirname(input_folder)
-
-## Debug ##
-## input_files <- list.files(
-##   path = "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size/eig",
-##   pattern = ".geno", full.names = TRUE)
-
-## snp_files <- list.files(
-##   path = "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size/eig",
-##   pattern = ".snp", full.names = TRUE)
-###########
 
 input_prefixes <- gsub(pattern = ".geno", replacement = "", input_files)
 parent_dir <- dirname(input_folder)
