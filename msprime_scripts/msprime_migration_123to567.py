@@ -17,8 +17,13 @@ cli.add_argument( "-name", type = str, required = True,
                   help = "Name prefix of output vcf files.")
 cli.add_argument( "-how_many", type = int, default = 1,
                   help = 'How many simulations are going to be run in one go.' )
+cli.add_argument( "-scale", type = float, default = 1,
+                  help = 'Scale all branch length by `scale`. It cannot be <= 0.5' )
+cli.add_argument( "-rec", type = float, default = 1.25e-7,
+                  help = 'Recombination rate.' )
 cli.add_argument( "-mig_ratio", type = float, required = True,
                   help = 'Persentage of migrant in migration event.')
+
 argue = cli.parse_args()
 
 pathlib.Path(argue.out_folder).mkdir(parents = True, exist_ok = True) # Makes Output directories
@@ -29,15 +34,17 @@ pathlib.Path(argue.out_folder).mkdir(parents = True, exist_ok = True) # Makes Ou
 
 ## These times are in generations
 
-split_time_2_3 = 80
-split_time_1_2_3 = 150
-split_time_0_1_2_3 = 200
-split_time_5_6 = 80
-split_time_7_5_6 = 150
-split_time_8_7_5_6 = 200
-split_time_ingroups = 400
-split_time_ingroups_out_2 = 500
-split_time_ancestral_all = 1000
+scale_factor = argue.scale
+
+split_time_2_3 = 80 * scale_factor
+split_time_1_2_3 = 150 * scale_factor
+split_time_0_1_2_3 = 200 * scale_factor
+split_time_5_6 = 80 * scale_factor
+split_time_7_5_6 = 150 * scale_factor
+split_time_8_7_5_6 = 200 * scale_factor
+split_time_ingroups = 400 * scale_factor
+split_time_ingroups_out_2 = 500 * scale_factor
+split_time_ancestral_all = 1000 * scale_factor
 
 admixture_time = 40
 
@@ -158,9 +165,8 @@ demography.add_admixture(
 
 # ** Create migration
 
-migration_time = 180
+migration_time = 170 * scale_factor
 migration_intensity = argue.mig_ratio
-
 
 demography.add_mass_migration(
     time=migration_time,
@@ -170,15 +176,15 @@ demography.add_mass_migration(
 
 # ** Sampling
 
-sampling_scheme_0 = msprime.SampleSet( 5, population = "pop_0", time = 0 )
-sampling_scheme_1 = msprime.SampleSet( 5, population = "pop_1", time = 0 )
-sampling_scheme_2 = msprime.SampleSet( 5, population = "pop_2", time = 0 )
-sampling_scheme_3 = msprime.SampleSet( 5, population = "pop_3", time = 0 )
-sampling_scheme_4 = msprime.SampleSet( 5, population = "pop_4", time = 0 )
-sampling_scheme_5 = msprime.SampleSet( 5, population = "pop_5", time = 0 )
-sampling_scheme_6 = msprime.SampleSet( 5, population = "pop_6", time = 0 )
-sampling_scheme_7 = msprime.SampleSet( 5, population = "pop_7", time = 0 )
-sampling_scheme_8 = msprime.SampleSet( 5, population = "pop_8", time = 0 )
+sampling_scheme_0 = msprime.SampleSet( 10, population = "pop_0", time = 0 )
+sampling_scheme_1 = msprime.SampleSet( 10, population = "pop_1", time = 0 )
+sampling_scheme_2 = msprime.SampleSet( 10, population = "pop_2", time = 0 )
+sampling_scheme_3 = msprime.SampleSet( 10, population = "pop_3", time = 0 )
+sampling_scheme_4 = msprime.SampleSet( 10, population = "pop_4", time = 0 )
+sampling_scheme_5 = msprime.SampleSet( 10, population = "pop_5", time = 0 )
+sampling_scheme_6 = msprime.SampleSet( 10, population = "pop_6", time = 0 )
+sampling_scheme_7 = msprime.SampleSet( 10, population = "pop_7", time = 0 )
+sampling_scheme_8 = msprime.SampleSet( 10, population = "pop_8", time = 0 )
 
 sampling_scheme_out_1 = msprime.SampleSet( 10, population = "outpop_1", time = 0 )
 sampling_scheme_out_0 = msprime.SampleSet( 10, population = "outpop_0", time = 0 )
@@ -194,27 +200,53 @@ demography.sort_events()
 
 # * Output naming
 
-names = [ pathlib.Path( argue.out_folder+"/"+argue.name+"rep_"+str(i)+".vcf" ) for i in range(argue.how_many) ]
+# names = [ pathlib.Path( argue.out_folder+"/"+argue.name+"rep_"+str(i)+".vcf" ) for i in range(argue.how_many) ]
 names = [ argue.out_folder+"/"+argue.name+"_rep_"+str(i)+".vcf" for i in range(argue.how_many) ]
 ##  Change "output.vcf"
 
 # * Start the simulation
+
+ind_metadata_filename = str(pathlib.Path(argue.out_folder).parent)+"/"+argue.name+"_model_metadata.tsv"
 
 for i in range(argue.how_many):
     
     ts = msprime.sim_ancestry(
         demography = demography,
         samples = all_samples,
-        recombination_rate = 1e-8,
+        recombination_rate = argue.rec,
         sequence_length = 5e+6,
-        ploidy = 1
+        ploidy = 2
     )
     mutated = msprime.sim_mutations( ts, rate = 1e-8, model = 'binary', discrete_genome = True, keep = False )
 # ** Modifing individual names for PLiNK integration
-    n_dip_indv = int(ts.num_samples)
+    n_dip_indv = int(mutated.num_individuals)
     indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
     with open(names[i], "w") as vcf_file:
-        ts.write_vcf(vcf_file, individual_names=indv_names)
+        mutated.write_vcf(
+            vcf_file,
+            contig_id = 'chr1',
+            individual_names=indv_names
+            )
+    vcf_file.close()
 # Plink doesn't like when individuals names end with "_0".
 # The previous lines modify sample names to avoid this problem.
+
+# ** Output Sample Metadata for the simulation
+
+# samples = mutated.samples()
+# sample_populations = mutated.individual_populations
+
+# n_dip_indv = int(mutated.num_individuals)
+# indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
+
+
+n_dip_indv = int(mutated.num_individuals)
+indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
+    
+with open(ind_metadata_filename, 'w') as metadata:
+    metadata.write("Ind_ID\tPopulation\n")
+    for i, ind_id in enumerate(mutated.individuals()):
+        # print(f"{indv_names[i]}\t{demography.populations[ind_id.population].name}\n")
+        metadata.write(f"{indv_names[i]}\t{demography.populations[ind_id.population].name}\n")
+metadata.close()
 
