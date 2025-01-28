@@ -26,9 +26,8 @@ plot_functions <- args[3]
 ## Debugging purposes ##
 ## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size/eig"
 ## output_folder <- "/media/storage/stef_sim/inference_estimation/statistics/no_migration_constant_size"
-## input_folder_scale_2 <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size_scale_2/eig"
-## input_folder_scale_5 <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size_scale_5/eig"
 
+## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/migration_0123to5678_mig_02_constant_size/eig"
 ## plot_functions <- "/home/stefanos/F_stat_performance/qpadm_inference/best_populations_plot_funtions.R"
 
 ########################
@@ -101,6 +100,7 @@ left_all <- list()
 right_all <- list()
 target_all <- list()
 exclude <- c()
+
 ## Use `population_names` to control the right populations
 for (i in 1:nrow(all_models)) {
   right_pops <- population_names[!(population_names %in% c(all_models[i, ], target))]
