@@ -27,8 +27,8 @@ plot_functions <- args[3]
 ## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size/eig"
 ## output_folder <- "/media/storage/stef_sim/inference_estimation/statistics/no_migration_constant_size"
 
-## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/migration_0123to5678_mig_02_constant_size/eig"
-## plot_functions <- "/home/stefanos/F_stat_performance/qpadm_inference/best_populations_plot_funtions.R"
+input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/migration_0123to5678_mig_02_constant_size_rec_e8/eig"
+plot_functions <- "/home/stefanos/F_stat_performance/qpadm_inference/best_populations_plot_funtions.R"
 
 ########################
 
@@ -134,7 +134,9 @@ list_of_all_summaries <- list(
   accepted_models = list(),
   accepted_models_2d = list(),
   best_pops = list(),
-  best_pops_2D = list()
+  best_pops_2D = list(),
+  specificity = list(),
+  specificity_2d = list()
 )
 
 for (rep in 1:length(input_prefixes)) {
@@ -186,7 +188,7 @@ for (rep in 1:length(input_prefixes)) {
   ## "good" are the models whose p_value is > 0.05 AND are "feasible"
   ## Sometimes qpAdm outputs weights not in [0,1]. These are not "feasible" models
   
-  factor_models <- data_v1[, 1:2]
+  factor_models <- data_v1[, 1:2] ## collumns of left_1 and left_2
   good_models <- data_v1[(data_v1$feasible == TRUE) & (data_v1$p_values > 0.05), ]
   good_pops <- factor(c(good_models$left_1, good_models$left_2), levels = all_ancestors)
   good_pops_2D <- data_frame(
@@ -197,8 +199,14 @@ for (rep in 1:length(input_prefixes)) {
   percent_of_accepted_models <- table(good_pops) / choose(length(unique(exclude)), 2)
   percent_of_accepted_models_2d <- table(good_pops_2D) / table(factor_models)
   
+  specificity <- table(good_pops) / length(good_pops)
+  specificity_2d <- table(good_pops_2D) / length(good_pops_2D)
+    
   list_of_all_summaries$accepted_models[[rep]] <- percent_of_accepted_models
   list_of_all_summaries$accepted_models_2d[[rep]] <- percent_of_accepted_models_2d
+
+  list_of_all_summaries$specificity[[rep]] <- specificity
+  list_of_all_summaries$specificity_2d[[rep]] <- specificity_2d
   
 # ** Scoring loop
   
@@ -352,7 +360,6 @@ for (rep in 1:length(input_prefixes)) {
   list_of_all_summaries$best_pops_2D[[rep]] <- best_pops_2D
 }
 
-
 # * Plotting
 
 # ** Names of files
@@ -377,6 +384,15 @@ accepted_models_2d_plot_name <- paste0(
     base_dir, "_accepted_models_2d.pdf"),
   collapse = "")
 
+specificity_plot_name <- paste0(
+  c( output_folder_for_plots, "/",
+    base_dir, "_specificity.pdf"),
+  collapse = "")
+
+specificity_2d_plot_name <- paste0(
+  c( output_folder_for_plots, "/",
+    base_dir, "_specificity_2d.pdf"),
+  collapse = "")
 
 # ** Calling functions & Printing plots
 
@@ -385,6 +401,7 @@ barplot_of_accepted_models <- plot_accepted_models(
   all_ancestors,
   ""
 )
+
 CairoPDF( accepted_models_plot_name )
 barplot_of_accepted_models
 dev.off()
@@ -394,6 +411,11 @@ heatmap_of_accepted_models_2d <- plot_accepted_models_2d(
   all_ancestors,
   ""
 )
+
+## CairoPDF( "test_accepted.pdf" )
+## heatmap_of_accepted_models_2d
+## dev.off()
+
 CairoPDF( accepted_models_2d_plot_name )
 heatmap_of_accepted_models_2d
 dev.off()
@@ -403,18 +425,48 @@ barplot_of_best_populations <- plot_best_2_pops(
   all_ancestors,
   ""
 )
+
 CairoPDF( best_population_plot_name )
 barplot_of_best_populations
 dev.off()
-
 
 heatmap_of_best_pop_pair <- plot_best_pop_pair(
   list_of_all_summaries$best_pops,
   all_ancestors,
   ""
 )
+
 CairoPDF( best_population_pair_plot_name )
 heatmap_of_best_pop_pair
+dev.off()
+
+barplot_of_specificity <- plot_specificity(
+  list_of_all_summaries$specificity,
+  all_ancestors,
+  ""
+)
+
+## CairoPDF( "specificity_plot.pdf" )
+## barplot_of_specificity
+## dev.off()
+
+CairoPDF( specificity_plot_name )
+barplot_of_specificity
+dev.off()
+
+heatmap_of_specificity_2d <- plot_specificity_2d(
+  list_of_all_summaries$specificity_2d,
+  all_ancestors,
+  ""
+)
+
+## CairoPDF( "specificity_plot_2d.pdf" )
+## heatmap_of_specificity_2d
+## ## heatmap_of_specificity_2d
+## dev.off()
+
+CairoPDF( specificity_2d_plot_name )
+heatmap_of_specificity_2d
 dev.off()
 
 ## output_folder <- "/media/storage/stef_sim/inference_estimation/plots"

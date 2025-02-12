@@ -85,7 +85,7 @@ plot_best_pop_pair <- function( population_rankings, all_ancestors, titlos = "" 
     axis.title.x = element_blank(),
     axis.title.y = element_blank()
   )
-  heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
+  heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_gradient2( low = "#56B4E9", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0))
   heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_x_discrete(drop = FALSE)
   heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_y_discrete(drop = FALSE)
   
@@ -155,10 +155,76 @@ plot_accepted_models_2d <- function( list_of_accepted_models_2d, all_ancestors, 
       axis.title = element_blank()
     )
   ## heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + theme_minimal()
-  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_fill_gradient( low = "#56B4E9", high = "#E69F00")
+  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_fill_gradient2( low = "#56B4E9", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0))
   heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_y_discrete( drop = FALSE )
   heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_x_discrete( drop = FALSE )
 
   return( heatmap_of_accepted_models_plot_2d )
+  
+}
+
+# * Specificity Plots
+
+## Plot: # of accepted models for pair / # of total accepted models
+
+plot_specificity <- function( list_of_specificity, all_ancestors, titlos = "" ){
+
+  average_specificity <- colMeans( do.call(rbind, list_of_specificity) )
+  average_specificity_for_barplot <- data.frame(
+    onomata = factor(names(average_specificity), levels = all_ancestors),
+    values = as.numeric(sprintf("%.4f", average_specificity))
+  )
+  
+  barplot_of_specificity <- ggplot(average_specificity_for_barplot, aes(x = onomata, y = as.numeric(values)))
+  barplot_of_specificity <- barplot_of_specificity + geom_bar(stat = "identity", fill = "steelblue")
+  barplot_of_specificity <- barplot_of_specificity + geom_text(
+    aes(label = values),
+    vjust = -0.3, size = 4
+  )
+  barplot_of_specificity <- barplot_of_specificity + labs(
+    title = titlos
+  )
+  barplot_of_specificity <- barplot_of_specificity + theme(
+    axis.title = element_blank()
+  )
+  barplot_of_specificity <- barplot_of_specificity + scale_x_discrete(drop = FALSE)
+  return( barplot_of_specificity )
+  
+}
+
+# * Specificity Pair Plots
+
+plot_specificity_2d <- function( list_of_specificity_2d, all_ancestors, titlos = "" ){
+
+  temp_reduce <- Reduce("+", list_of_specificity_2d) / length(list_of_specificity_2d)
+  melted_specificity_2d <- melt(temp_reduce / (length(list_of_specificity_2d) * upper.tri(temp_reduce)), na.rm = TRUE )
+  melted_specificity_2d <- melted_specificity_2d[!is.nan(melted_specificity_2d$value), ]
+  melted_specificity_2d$value  <- as.numeric(sprintf("%.4f", melted_specificity_2d$value))
+  
+  heatmap_of_specificity_plot_2d <- ggplot(melted_specificity_2d, aes( x = left_1, y = left_2, fill = value))
+  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + geom_tile(
+    color = "white",
+    lwd = 0.4,
+    linetype = 1
+  )
+  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + geom_text(
+    aes(label = value),
+    color = "white",
+    size = 3
+  )
+  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + labs(title = titlos)
+  ## heatmapap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + theme(
+  ##   axis.title.x = element_blank(),
+  ##   axis.title.y = element_blank()
+  ## )
+  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + theme(
+      axis.title = element_blank()
+    )
+  ## heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + theme_minimal()
+  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_fill_gradient2( low = "#56B4E9", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0))
+  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_y_discrete( drop = FALSE )
+  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_x_discrete( drop = FALSE )
+
+  return( heatmap_of_specificity_plot_2d )
   
 }
