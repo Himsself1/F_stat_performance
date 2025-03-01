@@ -20,17 +20,18 @@ library(admixtools)
 
 ## % of simulation that "population" was among the 2 best.
 
-plot_best_2_pops <- function( population_rankings, all_ancestors, titlos = "" ){
+plot_best_2_pops <- function( population_rankings, good_models, all_ancestors, titlos = "" ){
 
+  filtered_rankings <- population_rankings[good_models > 0]
   ## The following line extracts the 2 best population per simulation
   ## from a list of population rankings 
-  best_2_populations <- melt(do.call(rbind, lapply(1:rep, function(x) {
-    as.character(population_rankings[[x]][1:2, 1])
+  best_2_populations <- melt(do.call(rbind, lapply(1:length(filtered_rankings), function(x) {
+    as.character(filtered_rankings[[x]][1:2, 1])
   })))
   
   best_2_for_barplot <- data.frame(
     onomata = factor(names(table(factor(best_2_populations[, 3], levels = all_ancestors))), levels = all_ancestors),
-    values = as.vector(table(factor(best_2_populations[, 3], levels = all_ancestors)))
+    values = as.vector(table(factor(best_2_populations[, 3], levels = all_ancestors))/length(good_models))
   )
   
   barplot_of_best_2_pops <- ggplot(best_2_for_barplot, aes(x = onomata, y = as.numeric(values)))
@@ -54,19 +55,20 @@ plot_best_2_pops <- function( population_rankings, all_ancestors, titlos = "" ){
 
 ## % of simulation that "population pair" was the best.
 
-plot_best_pop_pair <- function( population_rankings, all_ancestors, titlos = "" ){
+plot_best_pop_pair <- function( population_rankings, good_models, all_ancestors, titlos = "" ){
 
+  filtered_rankings <- population_rankings[good_models > 0]
   ## The following line extracts the 2 best population per simulation
   ## from a list of population rankings 
-  best_two_pops_2d <- as.data.frame(do.call(rbind, lapply(1:rep, function(x) {
-    sort(as.character(population_rankings[[x]][1:2, 1]))
+  best_two_pops_2d <- as.data.frame(do.call(rbind, lapply(1:length(filtered_rankings), function(x) {
+    sort(as.character(filtered_rankings[[x]][1:2, 1]))
   })))
   names(best_two_pops_2d) <- c("best_1", "best_2")
   
   best_two_pops_2d$best_1 <- factor(best_two_pops_2d$best_1, levels = all_ancestors)
   best_two_pops_2d$best_2 <- factor(best_two_pops_2d$best_2, levels = all_ancestors)
   
-  melted_best_two_pops_2d <- melt(table(best_two_pops_2d) / nrow(best_two_pops_2d)) # Divide by the number of simulations.
+  melted_best_two_pops_2d <- melt(table(best_two_pops_2d) / length(good_models)) # Divide by the number of simulations.
   triangle <- as.character(melted_best_two_pops_2d$best_1) < as.character(melted_best_two_pops_2d$best_2)
   
   heatmap_of_best_two_pops_2d <- ggplot(melted_best_two_pops_2d[triangle, ], aes(x = best_1, y = best_2, fill = value))
@@ -98,9 +100,10 @@ plot_best_pop_pair <- function( population_rankings, all_ancestors, titlos = "" 
 ## Number of models of "population" that are accepted divided by
 ## all the possible models that the population can take part in.
 
-plot_accepted_models <- function( list_of_accepted_models, all_ancestors, titlos = "" ){
+plot_accepted_models <- function( list_of_accepted_models, good_models, all_ancestors, titlos = "" ){
 
-  average_accepted_models <- colMeans( do.call(rbind, list_of_accepted_models) )
+  filtered_accepted_models <- list_of_accepted_models[good_models > 0]
+  average_accepted_models <- colSums( do.call(rbind, filtered_accepted_models) )/length(good_models)
   average_accepted_models_for_barplot <- data.frame(
     onomata = factor(names(average_accepted_models), levels = all_ancestors),
     values = as.numeric(sprintf("%.4f", average_accepted_models))
@@ -129,9 +132,11 @@ plot_accepted_models <- function( list_of_accepted_models, all_ancestors, titlos
 ## Number of models of "population pair" that are accepted divided by
 ## all the possible models that the population pair can take part in.
 
-plot_accepted_models_2d <- function( list_of_accepted_models_2d, all_ancestors, titlos = "" ){
+plot_accepted_models_2d <- function( list_of_accepted_models_2d, good_models, all_ancestors, titlos = "" ){
 
-  melted_accepted_models_2d <- melt(Reduce("+", list_of_accepted_models_2d) / length(list_of_accepted_models_2d), na.rm = TRUE)
+  filtered_accepted_models_2d <- list_of_accepted_models_2d[good_models > 0]
+  ## melted_accepted_models_2d <- melt(Reduce("+", filtered_accepted_models_2d) / length(filtered_accepted_models_2d), na.rm = TRUE)
+  melted_accepted_models_2d <- melt(Reduce("+", filtered_accepted_models_2d) / length(good_models), na.rm = TRUE)
   melted_accepted_models_2d <- melted_accepted_models_2d[!is.nan(melted_accepted_models_2d$value), ]
   melted_accepted_models_2d$value  <- as.numeric(sprintf("%.4f", melted_accepted_models_2d$value))
   
@@ -155,7 +160,7 @@ plot_accepted_models_2d <- function( list_of_accepted_models_2d, all_ancestors, 
       axis.title = element_blank()
     )
   ## heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + theme_minimal()
-  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_fill_gradient2( low = "#56B4E9", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0))
+  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_fill_gradient2( low = "#56B4E9", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0) )
   heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_y_discrete( drop = FALSE )
   heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_x_discrete( drop = FALSE )
 
@@ -165,11 +170,10 @@ plot_accepted_models_2d <- function( list_of_accepted_models_2d, all_ancestors, 
 
 # * Specificity Plots
 
-## Plot: # of accepted models for pair / # of total accepted models
-
-plot_specificity <- function( list_of_specificity, all_ancestors, titlos = "" ){
-
-  average_specificity <- colMeans( do.call(rbind, list_of_specificity) )
+plot_specificity <- function( list_of_specificity, good_models, all_ancestors, titlos = "" ){
+  
+  filtered_specificity <- list_of_specificity[good_models > 0]
+  average_specificity <- colSums(do.call(rbind, filtered_specificity))/length(good_models)
   average_specificity_for_barplot <- data.frame(
     onomata = factor(names(average_specificity), levels = all_ancestors),
     values = as.numeric(sprintf("%.4f", average_specificity))
@@ -194,10 +198,12 @@ plot_specificity <- function( list_of_specificity, all_ancestors, titlos = "" ){
 
 # * Specificity Pair Plots
 
-plot_specificity_2d <- function( list_of_specificity_2d, all_ancestors, titlos = "" ){
+plot_specificity_2d <- function( list_of_specificity_2d, good_models, all_ancestors, titlos = "" ){
 
-  temp_reduce <- Reduce("+", list_of_specificity_2d) / length(list_of_specificity_2d)
-  melted_specificity_2d <- melt(temp_reduce / (length(list_of_specificity_2d) * upper.tri(temp_reduce)), na.rm = TRUE )
+  filtered_specificity_2d <- list_of_specificity_2d[good_models > 0]
+  temp_reduce <- Reduce("+", filtered_specificity_2d) / length(filtered_specificity_2d)
+  ## melted_specificity_2d <- melt(temp_reduce / (length(filtered_specificity_2d) * upper.tri(temp_reduce)), na.rm = TRUE )
+  melted_specificity_2d <- melt(temp_reduce / (length(good_models) * upper.tri(temp_reduce)), na.rm = TRUE )
   melted_specificity_2d <- melted_specificity_2d[!is.nan(melted_specificity_2d$value), ]
   melted_specificity_2d$value  <- as.numeric(sprintf("%.4f", melted_specificity_2d$value))
   

@@ -16,14 +16,7 @@ for (i in list_of_packages) {
 devtools::install_github("uqrmaie1/admixtools")
 library(admixtools)
 
-# * Command line arguments
-
-args<-commandArgs(TRUE)
-input_folder <- args[1]
-output_folder <- args[2]
-plot_functions <- args[3]
-
-## Debugging purposes ##
+# * Debugging purposes
 ## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size/eig"
 ## output_folder <- "/media/storage/stef_sim/inference_estimation/statistics/no_migration_constant_size"
 
@@ -31,6 +24,14 @@ input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/migrati
 plot_functions <- "/home/stefanos/F_stat_performance/qpadm_inference/best_populations_plot_funtions.R"
 
 ########################
+
+
+# * Command line arguments
+
+args<-commandArgs(TRUE)
+input_folder <- args[1]
+output_folder <- args[2]
+plot_functions <- args[3]
 
 ## Functions for plotting are located in another file
 source( plot_functions )
@@ -136,7 +137,9 @@ list_of_all_summaries <- list(
   best_pops = list(),
   best_pops_2D = list(),
   specificity = list(),
-  specificity_2d = list()
+  specificity_2d = list(),
+  model_results = list(),
+  good_models = list()
 )
 
 for (rep in 1:length(input_prefixes)) {
@@ -183,13 +186,16 @@ for (rep in 1:length(input_prefixes)) {
     feasible_all = feasibility[rep(which(exclude == "all"), each = length(all_ancestors) - 1)],
     replicate = rep( rep, length(exclude) )
   )
+
+  list_of_all_summaries$model_results[[rep]] <- data_v1
   
 # ** Calculate "good" models per source. 
   ## "good" are the models whose p_value is > 0.05 AND are "feasible"
   ## Sometimes qpAdm outputs weights not in [0,1]. These are not "feasible" models
   
-  factor_models <- data_v1[, 1:2] ## collumns of left_1 and left_2
-  good_models <- data_v1[(data_v1$feasible == TRUE) & (data_v1$p_values > 0.05), ]
+  factor_models <- list_of_all_summaries$model_results[[rep]][, 1:2] ## collumns of left_1 and left_2
+  good_models <- list_of_all_summaries$model_results[[rep]][(list_of_all_summaries$model_results[[rep]]$feasible == TRUE) & (list_of_all_summaries$model_results[[rep]]$p_values > 0.05), ]
+  list_of_all_summaries$good_models[[rep]] <- nrow(good_models)
   good_pops <- factor(c(good_models$left_1, good_models$left_2), levels = all_ancestors)
   good_pops_2D <- data_frame(
     left_1 = factor(good_models$left_1, levels = all_ancestors),
@@ -211,7 +217,7 @@ for (rep in 1:length(input_prefixes)) {
 # ** Scoring loop
   
   data_for_scoring_function <- as.data.frame(
-    data_v1[exclude != "all", c(1, 2, 5, 6, 7, 8, 9)],
+    list_of_all_summaries$model_results[[rep]][exclude != "all", c(1, 2, 5, 6, 7, 8, 9)],
     row.names = 1:sum(exclude != "all")
   )
   
@@ -398,9 +404,14 @@ specificity_2d_plot_name <- paste0(
 
 barplot_of_accepted_models <- plot_accepted_models(
   list_of_all_summaries$accepted_models,
+  list_of_all_summaries$good_models,
   all_ancestors,
   ""
 )
+
+## CairoPDF( "test_accepted.pdf" )
+## barplot_of_accepted_models
+## dev.off()
 
 CairoPDF( accepted_models_plot_name )
 barplot_of_accepted_models
@@ -408,13 +419,16 @@ dev.off()
 
 heatmap_of_accepted_models_2d <- plot_accepted_models_2d(
   list_of_all_summaries$accepted_models_2d,
+  list_of_all_summaries$good_models,
   all_ancestors,
   ""
 )
 
-## CairoPDF( "test_accepted.pdf" )
+###
+## CairoPDF( "test_accepted_2d.pdf" )
 ## heatmap_of_accepted_models_2d
 ## dev.off()
+###
 
 CairoPDF( accepted_models_2d_plot_name )
 heatmap_of_accepted_models_2d
@@ -422,9 +436,16 @@ dev.off()
 
 barplot_of_best_populations <- plot_best_2_pops(
   list_of_all_summaries$best_pops,
+  list_of_all_summaries$good_models,
   all_ancestors,
   ""
 )
+
+###
+## CairoPDF( "test_best_pops.pdf" )
+## barplot_of_best_populations
+## dev.off()
+###
 
 CairoPDF( best_population_plot_name )
 barplot_of_best_populations
@@ -432,9 +453,16 @@ dev.off()
 
 heatmap_of_best_pop_pair <- plot_best_pop_pair(
   list_of_all_summaries$best_pops,
+  list_of_all_summaries$good_models,
   all_ancestors,
   ""
 )
+
+###
+## CairoPDF( "test_best_pops_2d.pdf" )
+## heatmap_of_best_pop_pair
+## dev.off()
+###
 
 CairoPDF( best_population_pair_plot_name )
 heatmap_of_best_pop_pair
@@ -442,13 +470,16 @@ dev.off()
 
 barplot_of_specificity <- plot_specificity(
   list_of_all_summaries$specificity,
+  list_of_all_summaries$good_models,
   all_ancestors,
   ""
 )
 
+###
 ## CairoPDF( "specificity_plot.pdf" )
 ## barplot_of_specificity
 ## dev.off()
+###
 
 CairoPDF( specificity_plot_name )
 barplot_of_specificity
@@ -456,6 +487,7 @@ dev.off()
 
 heatmap_of_specificity_2d <- plot_specificity_2d(
   list_of_all_summaries$specificity_2d,
+  list_of_all_summaries$good_models,
   all_ancestors,
   ""
 )
