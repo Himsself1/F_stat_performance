@@ -23,98 +23,100 @@ library(admixtools)
 args<-commandArgs(TRUE)
 yaml_input <- args[1]
 
-## yaml_input <- "./qpadm_inference/tournament.yaml"
+## yaml_input <- "./qpadm_inference/apoikia_tournament_example.yaml"
 
 # ** Verify arguments
 
 if( file.exists( yaml_input ) ){
   input_params <- read_yaml( yaml_input )
 }else{
-  sprintf( "YAML file: %s not found.", yaml_input )
-  exit()
+  cat(sprintf( "YAML file: %s not found. \n", yaml_input ))
+  stop("Stop 0")
 }
 
 # *** Population file names
 
 if( !file.exists( input_params$file_with_ind_names ) ){
-  sprintf( "File %s does not exist.", input_params$file_with_ind_names )
-  exit()
+  cat(sprintf( "File %s does not exist. \n", input_params$file_with_ind_names ))
+  stop( "Stop 1" )
 }else{
-  ind_names <- as.vector(read.table(input_params$file_with_ind_names))
+  ind_names <- read.table(input_params$file_with_ind_names)[,1]
 }
 
 if( !file.exists( input_params$file_with_pop_names ) ){
-  sprintf( "File %s does not exist.", input_params$file_with_pop_names )
-  exit()
+  cat(sprintf( "File %s does not exist. \n", input_params$file_with_pop_names ))
+  stop("Stop 2")
 }else{
-  pop_names <- as.vector(read.table(input_params$file_with_pop_names))
+  pop_names <- read.table(input_params$file_with_pop_names)[,1]
 }
 
 if( !dir.exists(input_params$path_to_eigenstrat) ){
-  sprintf( "Input folder: %s does not extist.",
+  cat(sprintf( "Input folder: %s does not exist. \n",
           input_params$path_to_eigenstrat
-          )
-  exit()
+          ))
+  stop("Stop 3")
 }
 
 eig_files <- list.files(path = input_params$path_to_eigenstrat,
            pattern = input_params$prefix)
 if( length(eig_files) < 3 ){
-  sprintf("EIGENSTRAT files missing or incomplete.")
-  exit()
+  cat(sprintf("EIGENSTRAT files missing or incomplete. \n"))
+  stop("Stop 4")
+}else{
+  input_prefix <- paste0(c(input_params$path_to_eigenstrat, input_params$prefix), collapse = '/')
 }
 
 # *** Check suitability of targets, left and right populations
 
-if( input_params$competing_pops == "" ){
-  sprintf( "Please select populations to compete" )
-  exit()
+if( length(input_params$competing_pops) < 2 ){
+  cat(sprintf( "Please select populations to compete \n" ))
+  stop("Stop 5")
 }else{
   competing_pops <- input_params$competing_pops
   if( sum(!(competing_pops %in% pop_names)) ){
-    sprintf( "Populations %s are not in %s",
-            paste0(competing_pops[!(competing_pops %in% pop_names)], collapse = ' '),
-            input_params$file_with_pop_names )
-    exit()
+    cat(sprintf( "Populations  \n %s are not in \n %s \n",
+                paste0(competing_pops[!(competing_pops %in% pop_names)], collapse = ' '),
+                input_params$file_with_pop_names ))
+    stop("Stop 6")
   }
 }
 
-if( input_params$target_pop_name == "" ){
-  sprintf( "Please select a target population" )
-  exit()
+if( input_params$target_pop_name == '' ){
+  cat(sprintf( "Please select a target population.\n" ))
+  stop( "Stop 6.5" )
 }else{
   target_pop_name <- input_params$target_pop_name
   if( sum(!(target_pop_name %in% pop_names)) ){
-    sprintf( "Populations %s are not in %s",
-            paste0(target_pop_name[!(target_pop_name %in% pop_names)], collapse = ' '),
-            input_params$file_with_pop_names )
-    exit()
+    cat(sprintf( "Populations \n %s are not in \n %s \n",
+                paste0(target_pop_name[!(target_pop_name %in% pop_names)], collapse = ' '),
+                input_params$file_with_pop_names ))
+    stop("Stop 7")
   }
 }
 
 other_left_pops <- input_params$other_left_pops
 if( sum(!(other_left_pops %in% pop_names)) ){
-  sprintf( "Population(s) %s are not in %s",
-          paste0(target_pop_name[!(other_left_pops %in% pop_names)], collapse = ' '),
-          input_params$file_with_pop_names )
-  exit()
+  cat(sprintf( "Population(s) \n %s are not in \n %s \n",
+              paste0(target_pop_namee[!(other_left_pops %in% pop_names)], collapse = ' '),
+              input_params$file_with_pop_names ))
+  stop("Stop 8")
 }
 
 if( target_pop_name %in% competing_pops ){
-  sprintf( "Remove target population: %s from competing populations",
-          target_pop_name)
+  cat(sprintf( "Remove target population: %s from competing populations. \n",
+              target_pop_name))
 }
 
 if( target_pop_name %in% other_left_pops ){
-  sprintf( "Remove target population: %s from left populations",
-          target_pop_name)
+  cat(sprintf( "Remove target population: %s from left populations. \n",
+              target_pop_name))
 }
 
 # *** Create output folder
 
 out_dir_full_name <- paste0( c(input_params$output_folder, input_params$run_name), collapse = '/')
 out_dir_for_plots <- paste0(out_dir_full_name, "/plots/", collapse = '')
-out_dir_for_stats <- paste0(out_dirfull_name, "/stats/", collapse = '')
+out_dir_for_stats <- paste0(out_dir_full_name, "/stats/", collapse = '')
 dir.create( out_dir_for_plots, recursive = TRUE )
 dir.create( out_dir_for_stats, recursive = TRUE )
 
@@ -154,8 +156,8 @@ qp_models <- tibble(
 
 # * Runnign qpAdm
 
-f2_blocs_for_all_pops <- f2_from_geno(
-  pref = input_params$prefix,
+f2_blocks_for_all_pops <- f2_from_geno(
+  pref = input_prefix,
   pops = pop_names,
   inds = ind_names,
   adjust_pseudohaploid = FALSE  
@@ -189,12 +191,12 @@ data_v1 <- data.frame(
   p_values = unname(unlist(p_values)),
   p_values_all = unname(unlist(p_values[rep(which(exclude == "None"), each = 2)])),
   feasible = feasibility,
-  feasible_all = feasibility[rep(which(exclude == "all"), each = 2)],
+  feasible_all = feasibility[rep(which(exclude == "None"), each = 2)]
 )
 
 write.table(
   x = data_v1, quote = FALSE, sep = '\t',
-  file = paste0(c(output_folder_for_stats, "all_models.tsv"), collapse = '')
+  file = paste0(c(out_dir_for_stats, "all_models.tsv"), collapse = '')
 )
 
 # ** Preparing scoring functions
@@ -254,8 +256,6 @@ data_for_scoring_function$score_stef <- score_stef
 
 #### TODO: This needs testing with a real dataset ####
 
-
-
 # *** Calculating Lazaridis score
 
 ## If A is resillient to B and B is not resillient to A then A vs B = 1
@@ -264,8 +264,9 @@ data_for_scoring_function$score_stef <- score_stef
 ## The sign of the score denotes which population is favored in the comparison.
 data_versus <- data_for_scoring_function[, c(1:2, 7)]
 results_versus <- data_frame()
-for (l1 in 1:(length(competing_pops) - 1)) {
-  for (ex in (l1 + 1):(length(competing_pops))) {
+for (l1 in 1:(length(competing_pops)-1)) {
+  for (ex in (l1+1):(length(competing_pops))) {
+    ## print( paste0(c(l1, ex), collapse = ' '))
     if (l1 == ex) {
       next
     }
@@ -277,6 +278,7 @@ for (l1 in 1:(length(competing_pops) - 1)) {
     (data_versus$left_1 == competing_pops[ex]) &
       (data_versus$exclude == competing_pops[l1])
     )
+    ## cat(sprintf( "Scores %d \t %d \n", data_versus$score_stef[index_model_A], data_versus$score_stef[index_model_B]))
     if (data_versus$score_stef[index_model_A] > data_versus$score_stef[index_model_B]) {
       temp_result_versus <- c(competing_pops[l1], competing_pops[ex], 1)
     } else if (data_versus$score_stef[index_model_A] < data_versus$score_stef[index_model_B]) {
@@ -284,10 +286,10 @@ for (l1 in 1:(length(competing_pops) - 1)) {
     } else {
       temp_result_versus <- c(competing_pops[l1], competing_pops[ex], 0)
     }
+    results_versus <- rbind(results_versus, temp_result_versus)
   }
-  results_versus <- rbind(results_versus, temp_result_versus)
 }
 names(results_versus) <- c("left", "exclude", "score")
 results_versus$left <- factor(results_versus$left, levels = competing_pops)
 results_versus$exclude <- factor(results_versus$exclude, levels = competing_pops)
-results_versus$direction <- as.numeric(results_versus$score)
+
