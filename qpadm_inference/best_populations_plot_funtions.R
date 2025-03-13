@@ -47,7 +47,7 @@ plot_best_2_pops <- function( population_rankings, good_models, all_ancestors, t
     title = titlos
   )
   barplot_of_best_2_pops <- barplot_of_best_2_pops + scale_x_discrete(drop = FALSE)
-  
+  barplot_of_best_2_pops <- barplot_of_best_2_pops + scale_y_continuous(limits = c(0.0, 1.0))
   return( barplot_of_best_2_pops )
 }
 
@@ -122,7 +122,7 @@ plot_accepted_models <- function( list_of_accepted_models, good_models, all_ance
     axis.title = element_blank()
   )
   barplot_of_accepted_models <- barplot_of_accepted_models + scale_x_discrete(drop = FALSE)
-
+  barplot_of_accepted_models <- barplot_of_accepted_models + scale_y_continuous(limits = c(0.0, 1.0))
   return( barplot_of_accepted_models )
   
 }
@@ -192,6 +192,7 @@ plot_specificity <- function( list_of_specificity, good_models, all_ancestors, t
     axis.title = element_blank()
   )
   barplot_of_specificity <- barplot_of_specificity + scale_x_discrete(drop = FALSE)
+  barplot_of_specificity <- barplot_of_specificity + scale_y_continuous( limits(0.0, 1.0) )
   return( barplot_of_specificity )
   
 }
