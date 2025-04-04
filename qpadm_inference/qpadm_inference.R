@@ -20,8 +20,9 @@ library(admixtools)
 ## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size/eig"
 ## output_folder <- "/media/storage/stef_sim/inference_estimation/statistics/no_migration_constant_size"
 
-input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/migration_0123to5678_mig_02_constant_size_rec_e8/eig"
-plot_functions <- "/home/stefanos/F_stat_performance/qpadm_inference/best_populations_plot_funtions.R"
+## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/migration_0123to5678_mig_02_constant_size_rec_e8/eig"
+## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size_rec_1.25e-8_seq_248956422/eig"
+## plot_functions <- "/home/stefanos/F_stat_performance/qpadm_inference/best_populations_plot_funtions.R"
 
 ########################
 
@@ -55,6 +56,7 @@ dir.create( output_folder_for_stats, recursive = TRUE )
 
 # ** Assignment of individuals to populations 
 
+print( paste0(c("Metadata from: ", metadata_file) ) )
 metadata_info <- read.table( metadata_file, header = T, sep = '\t' )
 
 ## Each of the 9 populations have 5 samples.
@@ -127,6 +129,8 @@ qp_models <- tibble(
   target = target_all
 )
 
+## This is set in case global variables are large
+options(future.globals.maxSize = 10 * 1024^3)
 
 # * Analysis
 
