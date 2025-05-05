@@ -23,6 +23,8 @@ cli.add_argument( "-rec", type = float, default = 1.25e-7,
                   help = 'Recombination rate.' )
 cli.add_argument( "-mig_ratio", type = float, required = True,
                   help = 'Persentage of migrant in migration event.')
+cli.add_argument( "-seq_length", type = float, default = 5e+6,
+                  help = 'Genome Size.' )
 
 argue = cli.parse_args()
 
@@ -214,7 +216,7 @@ for i in range(argue.how_many):
         demography = demography,
         samples = all_samples,
         recombination_rate = argue.rec,
-        sequence_length = 5e+6,
+        sequence_length = argue.seq_length,
         ploidy = 2
     )
     mutated = msprime.sim_mutations( ts, rate = 1e-8, model = 'binary', discrete_genome = True, keep = False )

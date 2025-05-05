@@ -8,6 +8,8 @@ STATISTICS_FOLDER=$MASTER_OUT_FOLDER"statistics"
 
 SCRIPT_FOR_R_ANALYSIS="/home/stefanos/F_stat_performance/qpadm_inference/best_populations_plot_funtions.R"
 
+RECOMB_RATE=1.25e-8
+
 mkdir -p $MASTER_OUT_FOLDER
 mkdir -p $VCF_FOLDER
 mkdir -p $EIGENSTRAT_FOLDER
@@ -20,7 +22,7 @@ python3 ../msprime_scripts/msprime_no_migration.py \
     -name no_migration_constant_size \
     -how_many 100 \
     -scale 1 \
-    -rec 1.25e-8
+    -rec $RECOMB_RATE
 
 LIST_OF_FILES=$(find $VCF_FOLDER -type f -name "*.vcf" -exec readlink -f {} \;)
 
@@ -37,7 +39,7 @@ done
 LIST_OF_snps=$(find $EIGENSTRAT_FOLDER -type f -name "*.snp" -exec readlink -f {} \;)
 for file in ${LIST_OF_snps[@]}; do
     ## Multiply position with recombination rate
-    awk '{ $3 = $4*1.25e-8 } 1' $file > $file".tmp"
+    awk '{ $3 = $4*$RECOMB_RATE } 1' $file > $file".tmp"
     # awk '{ $3 = (50/100)*log(1/(1-2*(1e-8)*$4)) } 1' $file > $file".tmp"
     mv $file".tmp" $file
 done

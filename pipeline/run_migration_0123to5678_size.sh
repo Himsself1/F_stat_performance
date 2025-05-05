@@ -1,14 +1,15 @@
 #! /bin/bash
 
+RECOMB_RATE=1.25e-7
+SEQ_LENGTH=1e+7
+
 MASTER_OUT_FOLDER="/home/stefanos/new_storage/inference_estimation/"
-MODEL_FOLDER="sequencies/migration_0123to5678_mig_02_constant_size_rec_e8"
+MODEL_FOLDER="sequencies/migration_0123to5678_mig_02_constant_size_rec_${RECOMB_RATE}_seq_${SEQ_LENGTH}"
 VCF_FOLDER=$MASTER_OUT_FOLDER$MODEL_FOLDER"/vcf/"
 EIGENSTRAT_FOLDER=$MASTER_OUT_FOLDER$MODEL_FOLDER"/eig/"
 STATISTICS_FOLDER=$MASTER_OUT_FOLDER"statistics"
 
 SCRIPT_FOR_R_ANALYSIS="/home/stefanos/F_stat_performance/qpadm_inference/best_populations_plot_funtions.R"
-
-RECOMB_RATE=1.25e-8
 
 mkdir -p $MASTER_OUT_FOLDER
 mkdir -p $VCF_FOLDER
@@ -19,10 +20,11 @@ mkdir -p $STATISTICS_FOLDER
 
 python3 ../msprime_scripts/msprime_migration_0123to5678.py \
     -out_folder $VCF_FOLDER \
-    -name migration_0123_5678_mig_02_constant_size_e8 \
+    -name "migration_0123_5678_mig_02_constant_size_rec_${RECOMB_RATE}_seq_${SEQ_LENGTH}" \
     -how_many 100 \
     -rec $RECOMB_RATE \
-    -mig_ratio 0.2
+    -mig_ratio 0.2 \
+    -seq_length $SEQ_LENGTH
     
 ## Need to record output folders
 

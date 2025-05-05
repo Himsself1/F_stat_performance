@@ -21,6 +21,8 @@ cli.add_argument( "-scale", type = float, default = 1,
                   help = 'Scale all branch length by `scale`. It cannot be <= 0.5' )
 cli.add_argument( "-rec", type = float, default = 1.25e-7,
                   help = 'Recombination rate.' )
+cli.add_argument( "-seq_length", type = float, default = 5e+6,
+                  help = 'Genome Size.' )
 
 argue = cli.parse_args()
 
@@ -202,8 +204,12 @@ for i in range(argue.how_many):
     ts = msprime.sim_ancestry(
         demography = demography,
         samples = all_samples,
-        recombination_rate = 1.25e-7,
-        sequence_length = 1e+8,
+        model=[
+        msprime.DiscreteTimeWrightFisher(duration=40),
+        msprime.StandardCoalescent(),
+        ],
+        recombination_rate = argue.rec,
+        sequence_length = argue.seq_length,
         ploidy = 2
     )
     mutated = msprime.sim_mutations( ts, rate = 1.25e-8, model = 'binary', discrete_genome = True, keep = False )
