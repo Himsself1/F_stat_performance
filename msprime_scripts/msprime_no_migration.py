@@ -3,6 +3,7 @@
 import msprime
 import argparse
 import pathlib
+import numpy
 
 # * Command line arguments
 
@@ -220,7 +221,8 @@ for i in range(argue.how_many):
         mutated.write_vcf(
             vcf_file,
             contig_id = 'chr1',
-            individual_names=indv_names
+            individual_names=indv_names,
+            position_transform = lambda x: numpy.fmax(1, x)
             )
     vcf_file.close()
 # Plink doesn't like when individuals names end with "_0".
