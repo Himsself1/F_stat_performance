@@ -37,18 +37,18 @@ plot_functions <- args[3]
 ## Functions for plotting are located in another file
 source( plot_functions )
 
-input_files <- list.files(path = input_folder, pattern = ".geno", full.names = TRUE)
-snp_files <- list.files(path = input_folder, pattern = ".snp", full.names = TRUE)
+input_files <- list.files(path = input_folder, pattern = ".geno$", full.names = TRUE)
+snp_files <- list.files(path = input_folder, pattern = ".snp$", full.names = TRUE)
 
 ## parent_folder <- dirname(input_folder)
 
-input_prefixes <- gsub(pattern = ".geno", replacement = "", input_files)
+input_prefixes <- gsub(pattern = ".geno$", replacement = "", input_files)
 parent_dir <- dirname(input_folder)
-metadata_file <- list.files(path = parent_dir, pattern = ".tsv", full.names = TRUE)
+metadata_file <- list.files(path = parent_dir, pattern = ".tsv$", full.names = TRUE)
 
 base_dir <- basename(parent_dir) ## Name of the parent folder of the simulation.
-output_folder_for_plots <- paste0(output_folder, "/plots/", collapse = '')
-output_folder_for_stats <- paste0(output_folder, "/stats/", collapse = '')
+output_folder_for_plots <- file.path(output_folder, "plots")
+output_folder_for_stats <- file.path(output_folder, "stats")
 dir.create( output_folder_for_plots, recursive = TRUE )
 dir.create( output_folder_for_stats, recursive = TRUE )
 
@@ -201,7 +201,7 @@ for (rep in 1:length(input_prefixes)) {
   good_models <- list_of_all_summaries$model_results[[rep]][(list_of_all_summaries$model_results[[rep]]$feasible == TRUE) & (list_of_all_summaries$model_results[[rep]]$p_values > 0.05), ]
   list_of_all_summaries$good_models[[rep]] <- nrow(good_models)
   good_pops <- factor(c(good_models$left_1, good_models$left_2), levels = all_ancestors)
-  good_pops_2D <- data_frame(
+  good_pops_2D <- data.frame(
     left_1 = factor(good_models$left_1, levels = all_ancestors),
     left_2 = factor(good_models$left_2, levels = all_ancestors)
   )
@@ -310,7 +310,7 @@ for (rep in 1:length(input_prefixes)) {
   ## If A is resillient to B and B is resillient to A then A vs B = 0
   ## If A is not resillient to B and B is resillient to A then A vs B = -1
   ## The sign of the score denotes which population is favored in the comparison.
-  results_versus <- data_frame()
+  results_versus <- data.frame()
   for (l1 in 1:(length(all_ancestors) - 1)) {
     for (ex in (l1 + 1):(length(all_ancestors))) {
       if (l1 == ex) {
@@ -350,7 +350,7 @@ for (rep in 1:length(input_prefixes)) {
   ## I have upper triangular population pairs (if I have A & B, I don't calculate B & A).
   ## In order to score each population seperately, I need to concatenate "left"+"exclude" and
   ## flip the sign of the "exclude" population.
-  results_versus_2nd_dim <- data_frame(
+  results_versus_2nd_dim <- data.frame(
     left = factor(c(results_versus[, 1], results_versus[, 2]), levels = all_ancestors),
     score = c(results_versus[, 3], results_versus[, 3] * (-1))
   )
