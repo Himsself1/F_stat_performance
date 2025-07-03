@@ -17,11 +17,12 @@ devtools::install_github("uqrmaie1/admixtools")
 library(admixtools)
 
 # * Debugging purposes
-## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size/eig"
-## output_folder <- "/media/storage/stef_sim/inference_estimation/statistics/no_migration_constant_size"
 
-## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/migration_0123to5678_mig_02_constant_size_rec_e8/eig"
-## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/no_migration_constant_size_rec_1.25e-8_seq_248956422/eig"
+########################
+
+## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/migration_23to56_mig_02_constant_size_rec_1.25e-7_seq_1e+6/eig"
+
+## output_folder <- "/media/storage/stef_sim/inference_estimation/statistics/"
 ## plot_functions <- "/home/stefanos/F_stat_performance/qpadm_inference/best_populations_plot_funtions.R"
 
 ########################
@@ -84,6 +85,7 @@ individual_names <- metadata_info$Ind_ID
 
 target <- "pop_4"
 all_ancestors <- paste("pop_", c(0:3,5:8), sep = '')
+## all_ancestors <- paste("pop_", c(0:2,4:8), sep = '')
 
 # ** Build all models
 
@@ -138,8 +140,8 @@ options(future.globals.maxSize = 10 * 1024^3)
 list_of_all_summaries <- list(
   accepted_models = list(),
   accepted_models_2d = list(),
-  best_pops = list(),
-  best_pops_2D = list(),
+  pop_scores = list(),
+  pop_scores_2D = list(),
   specificity = list(),
   specificity_2d = list(),
   model_results = list(),
@@ -357,17 +359,17 @@ for (rep in 1:length(input_prefixes)) {
 
   ## This shows how many times a population is the winner
 
-  best_pops <- as.data.frame(results_versus_2nd_dim %>%
+  pop_scores <- as.data.frame(results_versus_2nd_dim %>%
                                group_by(left) %>%
                                summarise(score = sum(score)) %>%
                                arrange(desc(score)))
 
-  best_pops_2D <- as.data.frame(results_versus %>%
+  pop_scores_2D <- as.data.frame(results_versus %>%
                                   group_by(left, exclude) %>%
                                   summarise(score = as.numeric(sum(direction))))
 
-  list_of_all_summaries$best_pops[[rep]] <- best_pops
-  list_of_all_summaries$best_pops_2D[[rep]] <- best_pops_2D
+  list_of_all_summaries$pop_scores[[rep]] <- pop_scores
+  list_of_all_summaries$pop_scores_2D[[rep]] <- pop_scores_2D
 }
 
 # * Plotting
@@ -417,7 +419,7 @@ barplot_of_accepted_models <- plot_accepted_models(
 ## barplot_of_accepted_models
 ## dev.off()
 
-CairoPDF( accepted_models_plot_name )
+CairoPDF(accepted_models_plot_name)
 barplot_of_accepted_models
 dev.off()
 
@@ -439,7 +441,7 @@ heatmap_of_accepted_models_2d
 dev.off()
 
 barplot_of_best_populations <- plot_best_2_pops(
-  list_of_all_summaries$best_pops,
+  list_of_all_summaries$pop_scores,
   list_of_all_summaries$good_models,
   all_ancestors,
   ""
@@ -456,7 +458,7 @@ barplot_of_best_populations
 dev.off()
 
 heatmap_of_best_pop_pair <- plot_best_pop_pair(
-  list_of_all_summaries$best_pops,
+  list_of_all_summaries$pop_scores,
   list_of_all_summaries$good_models,
   all_ancestors,
   ""
