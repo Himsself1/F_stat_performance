@@ -94,7 +94,7 @@ all_ancestors <- paste("pop_", c(0:3,5:8), sep = '')
 all_models <- c()
 for( i in 1:(length(all_ancestors)-1) ) {
   for( j in (i+1):length(all_ancestors) ){
-    all_models <- rbind( all_models, c(all_ancestors[i], all_ancestors[j]) )
+    all_models <- rbind( c(all_ancestors[i], all_ancestors[j]), all_models )
   }
 }
 
@@ -155,8 +155,8 @@ for (rep in 1:length(input_prefixes)) {
     pref = input_prefixes[rep],
     pops = individuals_in_populations,
     inds = individual_names,
-    adjust_pseudohaploid = TRUE,
-    blgsize = 0.05
+    adjust_pseudohaploid = TRUE
+    ## blgsize = 0.001
   )
   
   ## qpadm_multi iterates over a tibble whose rows represent
@@ -442,6 +442,7 @@ dev.off()
 
 barplot_of_best_populations <- plot_best_2_pops(
   list_of_all_summaries$pop_scores,
+  list_of_all_summaries$accepted_models,
   list_of_all_summaries$good_models,
   all_ancestors,
   ""
@@ -459,6 +460,7 @@ dev.off()
 
 heatmap_of_best_pop_pair <- plot_best_pop_pair(
   list_of_all_summaries$pop_scores,
+  list_of_all_summaries$accepted_models,
   list_of_all_summaries$good_models,
   all_ancestors,
   ""

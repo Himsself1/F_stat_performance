@@ -18,7 +18,7 @@ cli.add_argument( "-name", type = str, required = True,
                   help = "Name prefix of output vcf files.")
 cli.add_argument( "-how_many", type = int, default = 1,
                   help = 'How many simulations are going to be run in one go.' )
-cli.add_argument( "-scale", type = float, default = 1,
+cli.add_argument( "-scale", type = float, default = 1.0,
                   help = 'Scale all branch length by `scale`. It cannot be <= 0.5' )
 cli.add_argument( "-rec", type = float, default = 1.25e-7,
                   help = 'Recombination rate.' )
@@ -213,7 +213,7 @@ for i in range(argue.how_many):
         sequence_length = argue.seq_length,
         ploidy = 2
     )
-    mutated = msprime.sim_mutations( ts, rate = 1.25e-8, model = 'binary', discrete_genome = True, keep = False )
+    mutated = msprime.sim_mutations( ts, rate = 1e-8, model = 'binary', discrete_genome = True, keep = False )
 # ** Modifing individual names for PLiNK integration
     n_dip_indv = int(mutated.num_individuals)
     indv_names = [f"tsk_{i}indv" for i in range(n_dip_indv)]
