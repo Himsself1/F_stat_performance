@@ -13,14 +13,17 @@ for (i in list_of_packages) {
   }
 }
 
-devtools::install_github("uqrmaie1/admixtools")
-library(admixtools)
+if(!require("admixtools", character.only = TRUE)) {
+  devtools::install_github("uqrmaie1/admixtools")
+}
+
+read_table2 <- readr::read_table
 
 # * Debugging purposes
 
 ########################
 
-## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/migration_23to56_mig_02_constant_size_rec_1.25e-7_seq_1e+6/eig"
+## input_folder <- "/media/storage/stef_sim/inference_estimation/sequencies/migration_23to56_mig_02_constant_size_rec_1.25e-7_seq_1e+7/eig"
 
 ## output_folder <- "/media/storage/stef_sim/inference_estimation/statistics/"
 ## plot_functions <- "/home/stefanos/F_stat_performance/qpadm_inference/best_populations_plot_funtions.R"
@@ -36,7 +39,7 @@ output_folder <- args[2]
 plot_functions <- args[3]
 
 ## Functions for plotting are located in another file
-source( plot_functions )
+source(plot_functions)
 
 input_files <- list.files(path = input_folder, pattern = ".geno$", full.names = TRUE)
 snp_files <- list.files(path = input_folder, pattern = ".snp$", full.names = TRUE)
@@ -50,22 +53,22 @@ metadata_file <- list.files(path = parent_dir, pattern = ".tsv$", full.names = T
 base_dir <- basename(parent_dir) ## Name of the parent folder of the simulation.
 output_folder_for_plots <- file.path(output_folder, "plots")
 output_folder_for_stats <- file.path(output_folder, "stats")
-dir.create( output_folder_for_plots, recursive = TRUE )
-dir.create( output_folder_for_stats, recursive = TRUE )
+dir.create(output_folder_for_plots, recursive = TRUE)
+dir.create(output_folder_for_stats, recursive = TRUE)
 
 # * Data Preprocessing
 
 # ** Assignment of individuals to populations 
 
-print( paste0(c("Metadata from: ", metadata_file) ) )
-metadata_info <- read.table( metadata_file, header = T, sep = '\t' )
+print(paste0(c("Metadata from: ", metadata_file)))
+metadata_info <- read.table(metadata_file, header = T, sep = '\t')
 
 ## Each of the 9 populations have 5 samples.
 ## Each of the outgroup populations have 10 samples.
 ## Outgroup samples are located after the ingroup samples in the vcf
 
-normal_pops <- rep( sapply( 0:8, function(x){
-  paste0( "pop_", x )
+normal_pops <- rep(sapply(0:8, function(x) {
+  paste0("pop_", x)
 }), each = 10)
 
 outgroups <- rep(sapply(1:0, function(x) {
@@ -93,7 +96,7 @@ all_ancestors <- paste("pop_", c(0:3,5:8), sep = '')
 ## E.G. combination (pop_0, pop_1) exists but not (pop_1, pop_0)
 all_models <- c()
 for( i in 1:(length(all_ancestors)-1) ) {
-  for( j in (i+1):length(all_ancestors) ){
+  for( j in (i+1):length(all_ancestors) ) {
     all_models <- rbind( c(all_ancestors[i], all_ancestors[j]), all_models )
   }
 }
@@ -107,14 +110,16 @@ target_all <- list()
 exclude <- c()
 
 ## Use `population_names` to control the right populations
+outpops <- c("outpop_0", "outpop_1")
 for (i in 1:nrow(all_models)) {
-  right_pops <- population_names[!(population_names %in% c(all_models[i, ], target))]
+  right_pops <- c(outpops, setdiff( population_names, c(outpops, all_models[i,], target)))
+  ## right_pops <- population_names[!(population_names %in% c(all_models[i, ], target))]
   ## `list_of_right_pops`  will include all the permutations of right populations where only 1 is missing
   ## We use -1 because there are 1 outgroups
-  list_of_right_pops <- lapply(1:(length(right_pops) - length(unique(outgroups))), FUN = function(x) {
+  list_of_right_pops <- lapply((length(outpops)+1):length(right_pops), FUN = function(x) {
     right_pops[-x]
   })
-  names(list_of_right_pops) <- right_pops[1:(length(right_pops) - length(unique(outgroups)))]
+  names(list_of_right_pops) <- right_pops[(length(outpops)+1):length(right_pops)]
   list_of_right_pops$all <- right_pops  ## Lastly, add the model where none of the populations are missing
   for (j in 1:length(list_of_right_pops)) {
     left_all <- c(left_all, list(all_models[i, ]))

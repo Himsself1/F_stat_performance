@@ -4,7 +4,8 @@ list_of_packages <- c(
   "ggplot2", "devtools",
   "argparse", "stringr",
   "Cairo", "tibble",
-  "reshape", "dplyr"
+  "reshape", "dplyr",
+  "harrypotter"
 )
 
 for (i in list_of_packages) {
@@ -21,11 +22,11 @@ library(admixtools)
 ## % of simulation that "population" was among the 2 best.
 ## Ties are resolved based on which population has higher % of accepted models.
 
-plot_best_2_pops <- function( population_rankings, accepted_models, good_models, all_ancestors, titlos = "" ){
+plot_best_2_pops <- function(population_rankings, accepted_models, good_models, all_ancestors, titlos = "") {
 
   ## 1st find out the acceptance rate of each population in order to resolve potential ties.
   filtered_accepted_models <- accepted_models[good_models > 0]
-  average_accepted_models <- colSums( do.call(rbind, filtered_accepted_models) )/length(good_models)
+  average_accepted_models <- colSums(do.call(rbind, filtered_accepted_models))/length(good_models)
   average_accepted_models_for_barplot <- data.frame(
     onomata = factor(names(average_accepted_models), levels = all_ancestors),
     values = as.numeric(sprintf("%.4f", average_accepted_models))
@@ -38,23 +39,23 @@ plot_best_2_pops <- function( population_rankings, accepted_models, good_models,
   best_2_populations <- do.call(c, lapply(1:length(filtered_rankings), function(x) {
     temp_ranking <- filtered_rankings[[x]]
     temp_best <- temp_ranking[which(temp_ranking[,2] >= temp_ranking[2,2]),]
-    if( nrow(temp_best) > 2 ){
+    if(nrow(temp_best) > 2) {
       # If there are more than 2 indexes (i.e. there are ties)
       # find out which populations are in the tie
       # find which 2 are the ones with the most accepted models
       # There are 2 cases with ties, there is 1 best populations and ties are for 2nd place
       # and there more than 3 popoulations with the best score.
       best <- which(temp_ranking[,1] == temp_ranking[1,1])
-      if( length(best) == 1 ){
+      if(length(best) == 1) {
         temp_tie <- temp_best[-1,]
-        temp_accepted <- filter( average_accepted_models_for_barplot, onomata %in% temp_tie[,1] ) %>% arrange( desc(values) )
+        temp_accepted <- filter( average_accepted_models_for_barplot, onomata %in% temp_tie[,1] ) %>% arrange(desc(values))
         to_return <- c(temp_ranking[1,1], temp_accepted[1,1])
-      }else{
+      } else {
         temp_tie <- temp_best[best,]
-        temp_accepted <- filter( average_accepted_models_for_barplot, onomata %in% temp_tie[,1] ) %>% arrange( desc(values) )
+        temp_accepted <- filter( average_accepted_models_for_barplot, onomata %in% temp_tie[,1] ) %>% arrange(desc(values))
         to_return <- c(temp_accepted[1:2, 1])
       }
-    }else{
+    } else {
       to_return <- c(temp_best[1:2,1])
     }
     return(as.character(to_return))
@@ -87,10 +88,10 @@ plot_best_2_pops <- function( population_rankings, accepted_models, good_models,
 
 ## % of simulation that "population pair" was the best.
 
-plot_best_pop_pair <- function( population_rankings, accepted_models, good_models, all_ancestors, titlos = "" ){
+plot_best_pop_pair <- function(population_rankings, accepted_models, good_models, all_ancestors, titlos = "") {
 
   filtered_accepted_models <- accepted_models[good_models > 0]
-  average_accepted_models <- colSums( do.call(rbind, filtered_accepted_models) )/length(good_models)
+  average_accepted_models <- colSums(do.call(rbind, filtered_accepted_models))/length(good_models)
   average_accepted_models_for_barplot <- data.frame(
     onomata = factor(names(average_accepted_models), levels = all_ancestors),
     values = as.numeric(sprintf("%.4f", average_accepted_models))
@@ -103,23 +104,23 @@ plot_best_pop_pair <- function( population_rankings, accepted_models, good_model
   best_two_pops_2d <- as.data.frame(do.call(rbind, lapply(1:length(filtered_rankings), function(x) {
     temp_ranking <- filtered_rankings[[x]]
     temp_best <- temp_ranking[which(temp_ranking[,2] >= temp_ranking[2,2]),]
-    if( nrow(temp_best) > 2 ){
+    if(nrow(temp_best) > 2){
       # If there are more than 2 indexes (i.e. there are ties)
       # find out which populations are in the tie
       # find which 2 are the ones with the most accepted models
       # There are 2 cases with ties, there is 1 best populations and ties are for 2nd place
       # and there more than 3 popoulations with the best score.
       best <- which(temp_ranking[,1] == temp_ranking[1,1])
-      if( length(best) == 1 ){
+      if(length(best) == 1) {
         temp_tie <- temp_best[-1,]
-        temp_accepted <- filter( average_accepted_models_for_barplot, onomata %in% temp_tie[,1] ) %>% arrange( desc(values) )
+        temp_accepted <- filter( average_accepted_models_for_barplot, onomata %in% temp_tie[,1]) %>% arrange(desc(values))
         to_return <- sort(as.character(c(temp_ranking[1,1], temp_accepted[1,1])))
-      }else{
+      } else {
         temp_tie <- temp_best[best,]
-        temp_accepted <- filter( average_accepted_models_for_barplot, onomata %in% temp_tie[,1] ) %>% arrange( desc(values) )
+        temp_accepted <- filter(average_accepted_models_for_barplot, onomata %in% temp_tie[,1]) %>% arrange(desc(values))
         to_return <- sort(as.character(temp_accepted[1:2,1]))
       }
-    }else{
+    } else {
       to_return <- sort(as.character(temp_best[1:2,1]))
     }
     ## temp_pops <- sort(as.character(temp_ranking[temp_indexes,1]))
@@ -151,11 +152,12 @@ plot_best_pop_pair <- function( population_rankings, accepted_models, good_model
     axis.title.x = element_blank(),
     axis.title.y = element_blank()
   )
-  heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_gradient2( low = "#56B4E9", mid = "#CD853F", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0))
+  ## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_gradient2( low = "#56B4E9", mid = "#CD853F", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0))
+  heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_hp(midpoint = 0.5, limits = c(0.0, 1.0), option = "Slytherin")
   heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_x_discrete(drop = FALSE)
   heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_y_discrete(drop = FALSE)
   
-  return( heatmap_of_best_two_pops_2d )
+  return(heatmap_of_best_two_pops_2d)
   
 }
 
@@ -164,7 +166,7 @@ plot_best_pop_pair <- function( population_rankings, accepted_models, good_model
 ## Number of models of "population" that are accepted divided by
 ## all the possible models that the population can take part in.
 
-plot_accepted_models <- function( list_of_accepted_models, good_models, all_ancestors, titlos = "" ){
+plot_accepted_models <- function(list_of_accepted_models, good_models, all_ancestors, titlos = "") {
 
   filtered_accepted_models <- list_of_accepted_models[good_models > 0]
   average_accepted_models <- colSums( do.call(rbind, filtered_accepted_models) )/length(good_models)
@@ -187,7 +189,7 @@ plot_accepted_models <- function( list_of_accepted_models, good_models, all_ance
   )
   barplot_of_accepted_models <- barplot_of_accepted_models + scale_x_discrete(drop = FALSE)
   barplot_of_accepted_models <- barplot_of_accepted_models + scale_y_continuous(limits = c(0.0, 1.0))
-  return( barplot_of_accepted_models )
+  return(barplot_of_accepted_models)
   
 }
 
@@ -196,7 +198,7 @@ plot_accepted_models <- function( list_of_accepted_models, good_models, all_ance
 ## Number of models of "population pair" that are accepted divided by
 ## all the possible models that the population pair can take part in.
 
-plot_accepted_models_2d <- function( list_of_accepted_models_2d, good_models, all_ancestors, titlos = "" ){
+plot_accepted_models_2d <- function( list_of_accepted_models_2d, good_models, all_ancestors, titlos = "" ) {
 
   filtered_accepted_models_2d <- list_of_accepted_models_2d[good_models > 0]
   ## melted_accepted_models_2d <- melt(Reduce("+", filtered_accepted_models_2d) / length(filtered_accepted_models_2d), na.rm = TRUE)
@@ -224,17 +226,18 @@ plot_accepted_models_2d <- function( list_of_accepted_models_2d, good_models, al
       axis.title = element_blank()
     )
   ## heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + theme_minimal()
-  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_fill_gradient2( low = "#56B4E9", mid = "#CD853F", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0) )
-  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_y_discrete( drop = FALSE )
-  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_x_discrete( drop = FALSE )
+  ## heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_fill_gradient2( low = "#56B4E9", mid = "#CD853F", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0) )
+  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_fill_hp(midpoint = 0.5, limits = c(0.0, 1.0), option = "Slytherin")
+  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_y_discrete(drop = FALSE)
+  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_x_discrete(drop = FALSE)
 
-  return( heatmap_of_accepted_models_plot_2d )
+  return(heatmap_of_accepted_models_plot_2d)
   
 }
 
 # * Specificity Plots
 
-plot_specificity <- function( list_of_specificity, good_models, all_ancestors, titlos = "" ){
+plot_specificity <- function(list_of_specificity, good_models, all_ancestors, titlos = "") {
   
   filtered_specificity <- list_of_specificity[good_models > 0]
   average_specificity <- colSums(do.call(rbind, filtered_specificity))/length(good_models)
@@ -256,23 +259,23 @@ plot_specificity <- function( list_of_specificity, good_models, all_ancestors, t
     axis.title = element_blank()
   )
   barplot_of_specificity <- barplot_of_specificity + scale_x_discrete(drop = FALSE)
-  barplot_of_specificity <- barplot_of_specificity + scale_y_continuous( limits = c(0.0, 1.0) )
-  return( barplot_of_specificity )
+  barplot_of_specificity <- barplot_of_specificity + scale_y_continuous(limits = c(0.0, 1.0))
+  return(barplot_of_specificity)
   
 }
 
 # * Specificity Pair Plots
 
-plot_specificity_2d <- function( list_of_specificity_2d, good_models, all_ancestors, titlos = "" ){
+plot_specificity_2d <- function(list_of_specificity_2d, good_models, all_ancestors, titlos = "") {
 
   filtered_specificity_2d <- list_of_specificity_2d[good_models > 0]
   temp_reduce <- Reduce("+", filtered_specificity_2d) / length(filtered_specificity_2d)
   ## melted_specificity_2d <- melt(temp_reduce / (length(filtered_specificity_2d) * upper.tri(temp_reduce)), na.rm = TRUE )
-  melted_specificity_2d <- melt(temp_reduce / (length(good_models) * upper.tri(temp_reduce)), na.rm = TRUE )
+  melted_specificity_2d <- melt(temp_reduce / (length(good_models) * upper.tri(temp_reduce)), na.rm = TRUE)
   melted_specificity_2d <- melted_specificity_2d[!is.nan(melted_specificity_2d$value), ]
   melted_specificity_2d$value  <- as.numeric(sprintf("%.4f", melted_specificity_2d$value))
   
-  heatmap_of_specificity_plot_2d <- ggplot(melted_specificity_2d, aes( x = left_1, y = left_2, fill = value))
+  heatmap_of_specificity_plot_2d <- ggplot(melted_specificity_2d, aes(x = left_1, y = left_2, fill = value))
   heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + geom_tile(
     color = "white",
     lwd = 0.4,
@@ -292,10 +295,11 @@ plot_specificity_2d <- function( list_of_specificity_2d, good_models, all_ancest
       axis.title = element_blank()
     )
   ## heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + theme_minimal()
-  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_fill_gradient2( low = "#56B4E9", mid = "#CD853F", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0))
-  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_y_discrete( drop = FALSE )
-  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_x_discrete( drop = FALSE )
+  ## heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_fill_gradient2( low = "#56B4E9", mid = "#CD853F", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0))
+  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_fill_hp(midpoint = 0.5, limits = c(0.0, 1.0), option = "Slytherin")
+  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_y_discrete(drop = FALSE)
+  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_x_discrete(drop = FALSE)
 
-  return( heatmap_of_specificity_plot_2d )
+  return(heatmap_of_specificity_plot_2d)
   
 }
