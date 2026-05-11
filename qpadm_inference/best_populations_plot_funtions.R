@@ -14,7 +14,10 @@ for (i in list_of_packages) {
   }
 }
 
-devtools::install_github("uqrmaie1/admixtools")
+if(!require("admixtools", character.only = TRUE)) {
+  pak::pak("uqrmaie1/admixtools")
+  ## devtools::install_github("uqrmaie1/admixtools")
+}
 library(admixtools)
 
 # * 2 Best Populations
