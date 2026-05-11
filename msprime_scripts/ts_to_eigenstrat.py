@@ -1,4 +1,6 @@
 import tskit
+import numpy
+import pathlib
 
 def ts_to_eigenstrat(ts, demography, out_prefix):
     """
@@ -29,13 +31,7 @@ def ts_to_eigenstrat(ts, demography, out_prefix):
     print(f"{out_prefix}.snp completed.")
     # .geno file: one row per SNP, one column per individual (0/1/2/9)
     G = ts.genotype_matrix()  # shape: (n_sites, n_samples)
-    
-    with open(f"{out_prefix}.geno", "w") as f:
-        for row in G:
-            # Sum haploid calls per diploid individual (pairs of samples)
-            dosages = []
-            for j in range(0, n_samples, 2):
-                dosages.append(str(row[j] + row[j+1]))
-            f.write("".join(dosages) + "\n")
-    f.close()
+    G_diploid = G[:,range(0,160,2)] + G[:,range(1,160,2)]
+    numpy.savetxt(pathlib.Path(f"{out_prefix}.geno"), G_diploid, fmt="%d", delimiter = "")
     print(f"{out_prefix}.geno completed.")
+

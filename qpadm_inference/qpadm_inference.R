@@ -14,7 +14,8 @@ for (i in list_of_packages) {
 }
 
 if(!require("admixtools", character.only = TRUE)) {
-  devtools::install_github("uqrmaie1/admixtools")
+  pak::pak("uqrmaie1/admixtools")
+  ## devtools::install_github("uqrmaie1/admixtools")
 }
 
 read_table2 <- readr::read_table
