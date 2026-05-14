@@ -162,7 +162,10 @@ plot_best_pop_pair <- function(population_rankings, accepted_models, good_models
     axis.title.y = element_blank()
   )
   ## heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_gradient2( low = "#56B4E9", mid = "#CD853F", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0))
-  heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_hp(begin = 0, end = 1, option = "Slytherin")
+  heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_fill_hp(
+                                                                 begin = 0,
+                                                                 end = max(melted_best_two_pops_2d[triangle,]$value),
+                                                                 option = "Slytherin")
   heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_x_discrete(drop = FALSE)
   heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_y_discrete(drop = FALSE)
   
@@ -236,7 +239,10 @@ plot_accepted_models_2d <- function( list_of_accepted_models_2d, good_models, al
     )
   ## heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + theme_minimal()
   ## heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_fill_gradient2( low = "#56B4E9", mid = "#CD853F", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0) )
-  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_fill_hp(begin = 0, end = 1, option = "Slytherin")
+  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_fill_hp(
+                                                                               begin = 0,
+                                                                               end = max(melted_accepted_models_2d$value),
+                                                                               option = "Slytherin")
   heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_y_discrete(drop = FALSE)
   heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_x_discrete(drop = FALSE)
 
@@ -305,7 +311,10 @@ plot_specificity_2d <- function(list_of_specificity_2d, good_models, all_ancesto
     )
   ## heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + theme_minimal()
   ## heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_fill_gradient2( low = "#56B4E9", mid = "#CD853F", high = "#E69F00", midpoint = 0.5, limits = c(0.0, 1.0))
-  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_fill_hp(begin = 0, end = 1, option = "Slytherin")
+  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_fill_hp(
+                                                                       begin = 0,
+                                                                       end = max(melted_specificity_2d$value),
+                                                                       option = "Slytherin")
   heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_y_discrete(drop = FALSE)
   heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_x_discrete(drop = FALSE)
 
