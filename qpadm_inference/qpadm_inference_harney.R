@@ -169,8 +169,8 @@ for (rep in 1:length(input_prefixes)) {
   ## In the final data frame, `p_value_all` and `feasible_all` show the p_value and
   ## feasibility of the model that doesn't exclude the respective population.
   data_v1 <- data.frame(
-    left_1 = factor(do.call(rbind, left_all)[, 1], levels = all_ancestors),
-    left_2 = factor(do.call(rbind, left_all)[, 2], levels = all_ancestors),
+    left_1 = factor(do.call(rbind, left_all)[, 1], levels = all_ancestors, ordered = T),
+    left_2 = factor(do.call(rbind, left_all)[, 2], levels = all_ancestors, ordered = T),
     weights_1 = as.data.frame(do.call(rbind, pop_weights))[, 1],
     weights_2 = as.data.frame(do.call(rbind, pop_weights))[, 2],
     exclude = exclude,
@@ -182,320 +182,298 @@ for (rep in 1:length(input_prefixes)) {
   )
 
   list_of_all_summaries$model_results[[rep]] <- data_v1
-  
-# ** Calculate "good" models per source. 
-  ## "good" are the models whose p_value is > 0.05 AND are "feasible"
-  ## Sometimes qpAdm outputs weights not in [0,1]. These are not "feasible" models
-  
-  factor_models <- list_of_all_summaries$model_results[[rep]][, 1:2] ## collumns of left_1 and left_2
-  good_models <- list_of_all_summaries$model_results[[rep]][(list_of_all_summaries$model_results[[rep]]$feasible == TRUE) & (list_of_all_summaries$model_results[[rep]]$p_values > 0.05), ]
-  list_of_all_summaries$good_models[[rep]] <- nrow(good_models)
-  good_pops <- factor(c(good_models$left_1, good_models$left_2), levels = all_ancestors)
-  good_pops_2D <- data.frame(
-    left_1 = factor(good_models$left_1, levels = all_ancestors),
-    left_2 = factor(good_models$left_2, levels = all_ancestors)
+
+  stats_output_name <-  file.path(
+    output_folder_for_stats,
+    sprintf("%s_qpadm_stats_rep_%d.tsv", base_dir, rep)
   )
+  print(sprintf("Writing file: %s", stats_output_name))
+  write.table(
+    data_v1, stats_output_name, sep = '\t',
+    row.names = F, col.names = T, quote = F
+  )
+
   
-  percent_of_accepted_models <- table(good_pops) / choose(length(unique(exclude)), 2)
-  percent_of_accepted_models_2d <- table(good_pops_2D) / table(factor_models)
+## # ** Calculate "good" models per source. 
+##   ## "good" are the models whose p_value is > 0.05 AND are "feasible"
+##   ## Sometimes qpAdm outputs weights not in [0,1]. These are not "feasible" models
   
-  specificity <- table(good_pops) / length(good_pops)
-  specificity_2d <- table(good_pops_2D) / length(good_pops_2D)
+##   factor_models <- list_of_all_summaries$model_results[[rep]][, 1:2] ## collumns of left_1 and left_2
+##   good_models <- list_of_all_summaries$model_results[[rep]][(list_of_all_summaries$model_results[[rep]]$feasible == TRUE) & (list_of_all_summaries$model_results[[rep]]$p_values > 0.05), ]
+##   list_of_all_summaries$good_models[[rep]] <- nrow(good_models)
+##   good_pops <- factor(c(good_models$left_1, good_models$left_2), levels = all_ancestors)
+##   good_pops_2D <- data.frame(
+##     left_1 = factor(good_models$left_1, levels = all_ancestors),
+##     left_2 = factor(good_models$left_2, levels = all_ancestors)
+##   )
+  
+##   percent_of_accepted_models <- table(good_pops) / choose(length(unique(exclude)), 2)
+##   percent_of_accepted_models_2d <- table(good_pops_2D) / table(factor_models)
+  
+##   specificity <- table(good_pops) / length(good_pops)
+##   specificity_2d <- table(good_pops_2D) / length(good_pops_2D)
     
-  list_of_all_summaries$accepted_models[[rep]] <- percent_of_accepted_models
-  list_of_all_summaries$accepted_models_2d[[rep]] <- percent_of_accepted_models_2d
+##   list_of_all_summaries$accepted_models[[rep]] <- percent_of_accepted_models
+##   list_of_all_summaries$accepted_models_2d[[rep]] <- percent_of_accepted_models_2d
 
-  list_of_all_summaries$specificity[[rep]] <- specificity
-  list_of_all_summaries$specificity_2d[[rep]] <- specificity_2d
+##   list_of_all_summaries$specificity[[rep]] <- specificity
+##   list_of_all_summaries$specificity_2d[[rep]] <- specificity_2d
   
-# ** Scoring loop
+## # ** Scoring loop
   
-  data_for_scoring_function <- as.data.frame(
-    list_of_all_summaries$model_results[[rep]][exclude != "all", c(1, 2, 5, 6, 7, 8, 9)],
-    row.names = 1:sum(exclude != "all")
-  )
+##   data_for_scoring_function <- as.data.frame(
+##     list_of_all_summaries$model_results[[rep]][exclude != "all", c(1, 2, 5, 6, 7, 8, 9)],
+##     row.names = 1:sum(exclude != "all")
+##   )
   
-  ## scores <- c()
-  ## for( i in 1:nrow(data_for_scoring_function) ){
-  ##   if( data_for_scoring_function[i,]$p_values_all >= 0.05 ){
-  ##     if( data_for_scoring_function[i,]$p_values >= 0.05 ){
-  ##       ## Inference keeps being good regardless of inclusion.
-  ##       scores <- c(scores, 1)
-  ##       next
-  ##     } else {
-  ##       ## Inference is good when population was included but bad when it was excluded.
-  ##       scores <- c(scores, -1)
-  ##       next
-  ##     }
-  ##   } else {
-  ##     if( data_for_scoring_function[i,]$p_values >= 0.05 ){
-  ##       ## Inference was bad when population was included but good when it was excluded.
-  ##       ## This was not included in the original Supplementary.
-  ##       scores <- c(scores, -1)
-  ##       next
-  ##     } else {
-  ##       ## If inference is bad regardless of inclusion
-  ##       scores <- c(scores, 0)
-  ##       next
-  ##     }
-  ##   }
-  ## }
-  ## data_for_scoring_function$scores <- scores
+##   ## scores <- c()
+##   ## for( i in 1:nrow(data_for_scoring_function) ){
+##   ##   if( data_for_scoring_function[i,]$p_values_all >= 0.05 ){
+##   ##     if( data_for_scoring_function[i,]$p_values >= 0.05 ){
+##   ##       ## Inference keeps being good regardless of inclusion.
+##   ##       scores <- c(scores, 1)
+##   ##       next
+##   ##     } else {
+##   ##       ## Inference is good when population was included but bad when it was excluded.
+##   ##       scores <- c(scores, -1)
+##   ##       next
+##   ##     }
+##   ##   } else {
+##   ##     if( data_for_scoring_function[i,]$p_values >= 0.05 ){
+##   ##       ## Inference was bad when population was included but good when it was excluded.
+##   ##       ## This was not included in the original Supplementary.
+##   ##       scores <- c(scores, -1)
+##   ##       next
+##   ##     } else {
+##   ##       ## If inference is bad regardless of inclusion
+##   ##       scores <- c(scores, 0)
+##   ##       next
+##   ##     }
+##   ##   }
+##   ## }
+##   ## data_for_scoring_function$scores <- scores
 
-# **  Calculate pairwise "resillience" (as described by Lazaridis 2024).
-  ## Returns 1 if resillient, -1 if not resillient and 0 if a decision cannot be made.
-  score_stef <- c()
-  for (i in 1:nrow(data_for_scoring_function)) {
-    if ((data_for_scoring_function$p_values[i] < 0.05) & (data_for_scoring_function$p_values_all[i] < 0.05)) {
-      ## Both models are bad
-      score_stef <- c(score_stef, 0)
-      next
-    } else if ((data_for_scoring_function$p_values[i] < 0.05) & (data_for_scoring_function$p_values_all[i] > 0.05)) {
-      ## Include is better, so I need to check if it is also feasible.
-      if (data_for_scoring_function$feasible_all[i] == TRUE) {
-        score_stef <- c(score_stef, 0)
-        next
-      } else {
-        score_stef <- c(score_stef, 0)
-        next
-      }
-    } else if ((data_for_scoring_function$p_values[i] > 0.05) & (data_for_scoring_function$p_values_all[i] < 0.05)) {
-      ## Exclude is better, so I need to check if it is also feasible.
-      if (data_for_scoring_function$feasible[i] == TRUE) {
-        score_stef <- c(score_stef, -1)
-        next
-      } else {
-        score_stef <- c(score_stef, 0)
-        next
-      }
-    } else {
-      ## Both P_include and P_exclude are > 0.05. Need to check if they are also feasible.
-      if ((data_for_scoring_function$feasible[i] == FALSE) & (data_for_scoring_function$feasible_all[i] == FALSE)) {
-        ## Both are not feasible => tie.
-        score_stef <- c(score_stef, 0)
-        next
-      } else if ((data_for_scoring_function$feasible[i] == FALSE) & (data_for_scoring_function$feasible_all[i] == TRUE)) {
-        score_stef <- c(score_stef, 0) # Need to discuss this. Include > Exclude
-        next
-      } else if ((data_for_scoring_function$feasible[i] == TRUE) & (data_for_scoring_function$feasible_all[i] == FALSE)) {
-        score_stef <- c(score_stef, -1) # Exclude > Include
-        next
-      } else {
-        ## Both P-values are > 0.05 and both are feasible => Inference is good
-        score_stef <- c(score_stef, 1)
-        next
-      }
-    }
-  }
-  data_for_scoring_function$score_stef <- score_stef
+## # **  Calculate pairwise "resillience" (as described by Lazaridis 2024).
+##   ## Returns 1 if resillient, -1 if not resillient and 0 if a decision cannot be made.
+##   score_stef <- c()
+##   for (i in 1:nrow(data_for_scoring_function)) {
+##     if ((data_for_scoring_function$p_values[i] < 0.05) & (data_for_scoring_function$p_values_all[i] < 0.05)) {
+##       ## Both models are bad
+##       score_stef <- c(score_stef, 0)
+##       next
+##     } else if ((data_for_scoring_function$p_values[i] < 0.05) & (data_for_scoring_function$p_values_all[i] > 0.05)) {
+##       ## Include is better, so I need to check if it is also feasible.
+##       if (data_for_scoring_function$feasible_all[i] == TRUE) {
+##         score_stef <- c(score_stef, 0)
+##         next
+##       } else {
+##         score_stef <- c(score_stef, 0)
+##         next
+##       }
+##     } else if ((data_for_scoring_function$p_values[i] > 0.05) & (data_for_scoring_function$p_values_all[i] < 0.05)) {
+##       ## Exclude is better, so I need to check if it is also feasible.
+##       if (data_for_scoring_function$feasible[i] == TRUE) {
+##         score_stef <- c(score_stef, -1)
+##         next
+##       } else {
+##         score_stef <- c(score_stef, 0)
+##         next
+##       }
+##     } else {
+##       ## Both P_include and P_exclude are > 0.05. Need to check if they are also feasible.
+##       if ((data_for_scoring_function$feasible[i] == FALSE) & (data_for_scoring_function$feasible_all[i] == FALSE)) {
+##         ## Both are not feasible => tie.
+##         score_stef <- c(score_stef, 0)
+##         next
+##       } else if ((data_for_scoring_function$feasible[i] == FALSE) & (data_for_scoring_function$feasible_all[i] == TRUE)) {
+##         score_stef <- c(score_stef, 0) # Need to discuss this. Include > Exclude
+##         next
+##       } else if ((data_for_scoring_function$feasible[i] == TRUE) & (data_for_scoring_function$feasible_all[i] == FALSE)) {
+##         score_stef <- c(score_stef, -1) # Exclude > Include
+##         next
+##       } else {
+##         ## Both P-values are > 0.05 and both are feasible => Inference is good
+##         score_stef <- c(score_stef, 1)
+##         next
+##       }
+##     }
+##   }
+##   data_for_scoring_function$score_stef <- score_stef
   
-  data_for_single_sim_heatmap <- data_for_scoring_function[, c(1:3, 8)]
-  data_heatmap_2 <- data_for_scoring_function[, c(2, 1, 3, 8)]
-  names(data_heatmap_2) <- names(data_for_single_sim_heatmap)
-  data_versus <- rbind(data_for_single_sim_heatmap, data_heatmap_2)
+##   data_for_single_sim_heatmap <- data_for_scoring_function[, c(1:3, 8)]
+##   data_heatmap_2 <- data_for_scoring_function[, c(2, 1, 3, 8)]
+##   names(data_heatmap_2) <- names(data_for_single_sim_heatmap)
+##   data_versus <- rbind(data_for_single_sim_heatmap, data_heatmap_2)
 
-# ** Calculating Lazaridis score
+## # ** Calculating Lazaridis score
 
-  ## If A is resillient to B and B is not resillient to A then A vs B = 1
-  ## If A is resillient to B and B is resillient to A then A vs B = 0
-  ## If A is not resillient to B and B is resillient to A then A vs B = -1
-  ## The sign of the score denotes which population is favored in the comparison.
-  results_versus <- data.frame()
-  for (l1 in 1:(length(all_ancestors) - 1)) {
-    for (ex in (l1 + 1):(length(all_ancestors))) {
-      if (l1 == ex) {
-        next
-      }
-      for (l2 in 1:length(all_ancestors)) {
-        if (l2 %in% c(l1, ex)) {
-          next
-        } else {
-          index_model_A <- which(
-          (data_versus$left_1 == all_ancestors[l1]) &
-            (data_versus$exclude == all_ancestors[ex]) &
-            (data_versus$left_2 == all_ancestors[l2])
-          )
-          index_model_B <- which(
-          (data_versus$left_1 == all_ancestors[ex]) &
-            (data_versus$exclude == all_ancestors[l1]) &
-            (data_versus$left_2 == all_ancestors[l2])
-          )
-          if (data_versus$score_stef[index_model_A] > data_versus$score_stef[index_model_B]) {
-            temp_result_versus <- c(all_ancestors[l1], all_ancestors[ex], 1)
-          } else if (data_versus$score_stef[index_model_A] < data_versus$score_stef[index_model_B]) {
-            temp_result_versus <- c(all_ancestors[l1], all_ancestors[ex], -1)
-          } else {
-            temp_result_versus <- c(all_ancestors[l1], all_ancestors[ex], 0)
-          }
-        }
-        results_versus <- rbind(results_versus, temp_result_versus)
-      }
-    }
-  }
-  names(results_versus) <- c("left", "exclude", "direction")
+##   ## If A is resillient to B and B is not resillient to A then A vs B = 1
+##   ## If A is resillient to B and B is resillient to A then A vs B = 0
+##   ## If A is not resillient to B and B is resillient to A then A vs B = -1
+##   ## The sign of the score denotes which population is favored in the comparison.
+##   results_versus <- data.frame()
+##   for (l1 in 1:(length(all_ancestors) - 1)) {
+##     for (ex in (l1 + 1):(length(all_ancestors))) {
+##       if (l1 == ex) {
+##         next
+##       }
+##       for (l2 in 1:length(all_ancestors)) {
+##         if (l2 %in% c(l1, ex)) {
+##           next
+##         } else {
+##           index_model_A <- which(
+##           (data_versus$left_1 == all_ancestors[l1]) &
+##             (data_versus$exclude == all_ancestors[ex]) &
+##             (data_versus$left_2 == all_ancestors[l2])
+##           )
+##           index_model_B <- which(
+##           (data_versus$left_1 == all_ancestors[ex]) &
+##             (data_versus$exclude == all_ancestors[l1]) &
+##             (data_versus$left_2 == all_ancestors[l2])
+##           )
+##           if (data_versus$score_stef[index_model_A] > data_versus$score_stef[index_model_B]) {
+##             temp_result_versus <- c(all_ancestors[l1], all_ancestors[ex], 1)
+##           } else if (data_versus$score_stef[index_model_A] < data_versus$score_stef[index_model_B]) {
+##             temp_result_versus <- c(all_ancestors[l1], all_ancestors[ex], -1)
+##           } else {
+##             temp_result_versus <- c(all_ancestors[l1], all_ancestors[ex], 0)
+##           }
+##         }
+##         results_versus <- rbind(results_versus, temp_result_versus)
+##       }
+##     }
+##   }
+##   names(results_versus) <- c("left", "exclude", "direction")
 
-  results_versus$left <- factor(results_versus$left, levels = all_ancestors)
-  results_versus$exclude <- factor(results_versus$exclude, levels = all_ancestors)
-  results_versus$direction <- as.numeric(results_versus$direction)
-  ## I have upper triangular population pairs (if I have A & B, I don't calculate B & A).
-  ## In order to score each population seperately, I need to concatenate "left"+"exclude" and
-  ## flip the sign of the "exclude" population.
-  results_versus_2nd_dim <- data.frame(
-    left = factor(c(results_versus[, 1], results_versus[, 2]), levels = all_ancestors),
-    score = c(results_versus[, 3], results_versus[, 3] * (-1))
-  )
+##   results_versus$left <- factor(results_versus$left, levels = all_ancestors)
+##   results_versus$exclude <- factor(results_versus$exclude, levels = all_ancestors)
+##   results_versus$direction <- as.numeric(results_versus$direction)
+##   ## I have upper triangular population pairs (if I have A & B, I don't calculate B & A).
+##   ## In order to score each population seperately, I need to concatenate "left"+"exclude" and
+##   ## flip the sign of the "exclude" population.
+##   results_versus_2nd_dim <- data.frame(
+##     left = factor(c(results_versus[, 1], results_versus[, 2]), levels = all_ancestors),
+##     score = c(results_versus[, 3], results_versus[, 3] * (-1))
+##   )
 
-  ## This shows how many times a population is the winner
+##   ## This shows how many times a population is the winner
 
-  pop_scores <- as.data.frame(results_versus_2nd_dim %>%
-                               group_by(left) %>%
-                               summarise(score = sum(score)) %>%
-                               arrange(desc(score)))
+##   pop_scores <- as.data.frame(results_versus_2nd_dim %>%
+##                                group_by(left) %>%
+##                                summarise(score = sum(score)) %>%
+##                                arrange(desc(score)))
 
-  pop_scores_2D <- as.data.frame(results_versus %>%
-                                  group_by(left, exclude) %>%
-                                  summarise(score = as.numeric(sum(direction))))
+##   pop_scores_2D <- as.data.frame(results_versus %>%
+##                                   group_by(left, exclude) %>%
+##                                   summarise(score = as.numeric(sum(direction))))
 
-  list_of_all_summaries$pop_scores[[rep]] <- pop_scores
-  list_of_all_summaries$pop_scores_2D[[rep]] <- pop_scores_2D
+##   list_of_all_summaries$pop_scores[[rep]] <- pop_scores
+##   list_of_all_summaries$pop_scores_2D[[rep]] <- pop_scores_2D
 }
 
 # * Plotting
 
 # ** Names of files
 
-best_population_plot_name <- paste0(
-  c( output_folder_for_plots, "/",
-    base_dir, "_best_pops.pdf"),
-  collapse = "")
+## best_population_plot_name <- paste0(
+##   c( output_folder_for_plots, "/",
+##     base_dir, "_best_pops.pdf"),
+##   collapse = "")
 
-best_population_pair_plot_name <- paste0(
-  c( output_folder_for_plots, "/",
-    base_dir, "_best_pop_pair.pdf"),
-  collapse = "")
+## best_population_pair_plot_name <- paste0(
+##   c( output_folder_for_plots, "/",
+##     base_dir, "_best_pop_pair.pdf"),
+##   collapse = "")
 
-accepted_models_plot_name <- paste0(
-  c( output_folder_for_plots, "/",
-    base_dir, "_accepted_models.pdf"),
-  collapse = "")
+## accepted_models_plot_name <- paste0(
+##   c( output_folder_for_plots, "/",
+##     base_dir, "_accepted_models.pdf"),
+##   collapse = "")
 
-accepted_models_2d_plot_name <- paste0(
-  c( output_folder_for_plots, "/",
-    base_dir, "_accepted_models_2d.pdf"),
-  collapse = "")
+## accepted_models_2d_plot_name <- paste0(
+##   c( output_folder_for_plots, "/",
+##     base_dir, "_accepted_models_2d.pdf"),
+##   collapse = "")
 
-specificity_plot_name <- paste0(
-  c( output_folder_for_plots, "/",
-    base_dir, "_specificity.pdf"),
-  collapse = "")
+## specificity_plot_name <- paste0(
+##   c( output_folder_for_plots, "/",
+##     base_dir, "_specificity.pdf"),
+##   collapse = "")
 
-specificity_2d_plot_name <- paste0(
-  c( output_folder_for_plots, "/",
-    base_dir, "_specificity_2d.pdf"),
-  collapse = "")
+## specificity_2d_plot_name <- paste0(
+##   c( output_folder_for_plots, "/",
+##     base_dir, "_specificity_2d.pdf"),
+##   collapse = "")
 
 # ** Calling functions & Printing plots
 
-barplot_of_accepted_models <- plot_accepted_models(
-  list_of_all_summaries$accepted_models,
-  list_of_all_summaries$good_models,
-  all_ancestors,
-  ""
-)
+## barplot_of_accepted_models <- plot_accepted_models(
+##   list_of_all_summaries$accepted_models,
+##   list_of_all_summaries$good_models,
+##   all_ancestors,
+##   ""
+## )
 
-## CairoPDF( "test_accepted.pdf" )
+## CairoPDF(accepted_models_plot_name)
 ## barplot_of_accepted_models
 ## dev.off()
 
-CairoPDF(accepted_models_plot_name)
-barplot_of_accepted_models
-dev.off()
+## heatmap_of_accepted_models_2d <- plot_accepted_models_2d(
+##   list_of_all_summaries$accepted_models_2d,
+##   list_of_all_summaries$good_models,
+##   all_ancestors,
+##   ""
+## )
 
-heatmap_of_accepted_models_2d <- plot_accepted_models_2d(
-  list_of_all_summaries$accepted_models_2d,
-  list_of_all_summaries$good_models,
-  all_ancestors,
-  ""
-)
-
-###
-## CairoPDF( "test_accepted_2d.pdf" )
+## CairoPDF( accepted_models_2d_plot_name )
 ## heatmap_of_accepted_models_2d
 ## dev.off()
-###
 
-CairoPDF( accepted_models_2d_plot_name )
-heatmap_of_accepted_models_2d
-dev.off()
+## barplot_of_best_populations <- plot_best_2_pops(
+##   list_of_all_summaries$pop_scores,
+##   list_of_all_summaries$accepted_models,
+##   list_of_all_summaries$good_models,
+##   all_ancestors,
+##   ""
+## )
 
-barplot_of_best_populations <- plot_best_2_pops(
-  list_of_all_summaries$pop_scores,
-  list_of_all_summaries$accepted_models,
-  list_of_all_summaries$good_models,
-  all_ancestors,
-  ""
-)
-
-###
-## CairoPDF( "test_best_pops.pdf" )
+## CairoPDF( best_population_plot_name )
 ## barplot_of_best_populations
 ## dev.off()
-###
 
-CairoPDF( best_population_plot_name )
-barplot_of_best_populations
-dev.off()
+## heatmap_of_best_pop_pair <- plot_best_pop_pair(
+##   list_of_all_summaries$pop_scores,
+##   list_of_all_summaries$accepted_models,
+##   list_of_all_summaries$good_models,
+##   all_ancestors,
+##   ""
+## )
 
-heatmap_of_best_pop_pair <- plot_best_pop_pair(
-  list_of_all_summaries$pop_scores,
-  list_of_all_summaries$accepted_models,
-  list_of_all_summaries$good_models,
-  all_ancestors,
-  ""
-)
-
-###
-## CairoPDF( "test_best_pops_2d.pdf" )
+## CairoPDF( best_population_pair_plot_name )
 ## heatmap_of_best_pop_pair
 ## dev.off()
-###
 
-CairoPDF( best_population_pair_plot_name )
-heatmap_of_best_pop_pair
-dev.off()
+## barplot_of_specificity <- plot_specificity(
+##   list_of_all_summaries$specificity,
+##   list_of_all_summaries$good_models,
+##   all_ancestors,
+##   ""
+## )
 
-barplot_of_specificity <- plot_specificity(
-  list_of_all_summaries$specificity,
-  list_of_all_summaries$good_models,
-  all_ancestors,
-  ""
-)
-
-###
-## CairoPDF( "specificity_plot.pdf" )
+## CairoPDF( specificity_plot_name )
 ## barplot_of_specificity
 ## dev.off()
-###
 
-CairoPDF( specificity_plot_name )
-barplot_of_specificity
-dev.off()
+## heatmap_of_specificity_2d <- plot_specificity_2d(
+##   list_of_all_summaries$specificity_2d,
+##   list_of_all_summaries$good_models,
+##   all_ancestors,
+##   ""
+## )
 
-heatmap_of_specificity_2d <- plot_specificity_2d(
-  list_of_all_summaries$specificity_2d,
-  list_of_all_summaries$good_models,
-  all_ancestors,
-  ""
-)
-
-## CairoPDF( "specificity_plot_2d.pdf" )
+## CairoPDF( specificity_2d_plot_name )
 ## heatmap_of_specificity_2d
-## ## heatmap_of_specificity_2d
 ## dev.off()
-
-CairoPDF( specificity_2d_plot_name )
-heatmap_of_specificity_2d
-dev.off()
 
 ## output_folder <- "/media/storage/stef_sim/inference_estimation/plots"
 

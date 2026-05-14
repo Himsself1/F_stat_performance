@@ -88,7 +88,10 @@ population_names <- unique(metadata_info$Population)
 individual_names <- metadata_info$Ind_ID
 
 target <- "pop_4"
-all_ancestors <- paste("pop_", c(0:3,5:8), sep = '')
+all_ancestors <- factor(
+  paste("pop_", c(0:3,5:8), sep = ''),
+  levels = paste("pop_", c(0:3,5:8), sep = ''),
+  ordered = T)
 ## all_ancestors <- paste("pop_", c(0:2,4:8), sep = '')
 
 # ** Build all models
