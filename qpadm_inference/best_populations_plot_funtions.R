@@ -5,7 +5,7 @@ list_of_packages <- c(
   "argparse", "stringr",
   "Cairo", "tibble",
   "reshape", "dplyr",
-  "harrypotter"
+  "harrypotter", "ggthemes"
 )
 
 for (i in list_of_packages) {
@@ -84,6 +84,7 @@ plot_best_2_pops <- function(population_rankings, accepted_models, good_models, 
   )
   barplot_of_best_2_pops <- barplot_of_best_2_pops + scale_x_discrete(drop = FALSE)
   barplot_of_best_2_pops <- barplot_of_best_2_pops + scale_y_continuous(limits = c(0.0, 1.0))
+  barplot_of_best_2_pops <- barplot_of_best_2_pops + theme_solarized()
   return( barplot_of_best_2_pops )
 }
 
@@ -168,7 +169,7 @@ plot_best_pop_pair <- function(population_rankings, accepted_models, good_models
                                                                  option = "Slytherin")
   heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_x_discrete(drop = FALSE)
   heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + scale_y_discrete(drop = FALSE)
-  
+  heatmap_of_best_two_pops_2d <- heatmap_of_best_two_pops_2d + theme_solarized()
   return(heatmap_of_best_two_pops_2d)
   
 }
@@ -201,6 +202,7 @@ plot_accepted_models <- function(list_of_accepted_models, good_models, all_ances
   )
   barplot_of_accepted_models <- barplot_of_accepted_models + scale_x_discrete(drop = FALSE)
   barplot_of_accepted_models <- barplot_of_accepted_models + scale_y_continuous(limits = c(0.0, 1.0))
+  barplot_of_accepted_models <- barplot_of_accepted_models + theme_solarized()
   return(barplot_of_accepted_models)
   
 }
@@ -245,7 +247,7 @@ plot_accepted_models_2d <- function( list_of_accepted_models_2d, good_models, al
                                                                                option = "Slytherin")
   heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_y_discrete(drop = FALSE)
   heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + scale_x_discrete(drop = FALSE)
-
+  heatmap_of_accepted_models_plot_2d <- heatmap_of_accepted_models_plot_2d + theme_solarized()
   return(heatmap_of_accepted_models_plot_2d)
   
 }
@@ -275,6 +277,7 @@ plot_specificity <- function(list_of_specificity, good_models, all_ancestors, ti
   )
   barplot_of_specificity <- barplot_of_specificity + scale_x_discrete(drop = FALSE)
   barplot_of_specificity <- barplot_of_specificity + scale_y_continuous(limits = c(0.0, 1.0))
+  barplot_of_specificity <- barplot_of_specificity + theme_solarized()
   return(barplot_of_specificity)
   
 }
@@ -317,7 +320,7 @@ plot_specificity_2d <- function(list_of_specificity_2d, good_models, all_ancesto
                                                                        option = "Slytherin")
   heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_y_discrete(drop = FALSE)
   heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + scale_x_discrete(drop = FALSE)
-
+  heatmap_of_specificity_plot_2d <- heatmap_of_specificity_plot_2d + theme_solarized()
   return(heatmap_of_specificity_plot_2d)
   
 }
